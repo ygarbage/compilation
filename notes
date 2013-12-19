@@ -1,0 +1,29 @@
+Pour créer le robot : robotgen
+
+compiler le driver
+déplacer le .so dans torcs-1.3.5/src/drivers/enseirBOT
+dans torcs-1.3.5, make install
+
+lancer torcs
+
+--
+pour changer de voiture : torcs-1.3.5/data/cars/models
+
+
+-- Todo
+
+  - Dans src13 :
+modifier/compléter gramar.y et scanner.l : le "compilateur" en llvm
+ce compilateur llvm doit prendre en entrée un fichier de notre choix, écrit en "langage d'entrée" et génerer du llvm.
+le fichier généré doit être drive.ll
+
+  - Dans driver :
+le fichier drive.ll est toujours le même à l'exception de la fonction drive.
+Donc le générateur de llvm doit recopier tout le reste, et générer cette fonction.
+
+-- Protips pour la version du 20/12/2013
+
+en llvm, on doit seulement conserver la ligne qui concerne la structure accelCmd,
+et faire le store comme il est fait dans le fichier drive.ll exemple du prof
+
+c'est tout pour le moment
