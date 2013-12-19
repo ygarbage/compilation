@@ -1,8 +1,9 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "grammar.tab.h"
-#include "string.h"
+#include <string.h>
 void count();
 int comment ();
 int check_type ();
@@ -23,7 +24,7 @@ L[a-zA-Z_]
 "for"		{ count(); return(FOR); }
 [$]?{L}({L}|{D})*	{ count(); yylval.s = strdup(yytext); return(IDENTIFIER); }
 {D}+    	{ count(); return(CONSTANTI); }
-{D}+"."{D}*             { count(); yylval.f = atof(yytext); return(CONSTANTF); }
+{D}+"."{D}*             { count(); yylval.f = (double)atof(yytext); return(CONSTANTF); }
 "+="		{ count(); return(ADD_ASSIGN); }
 "-="		{ count(); return(SUB_ASSIGN); }
 "*="		{ count(); return(MUL_ASSIGN); }
