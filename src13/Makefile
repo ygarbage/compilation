@@ -5,8 +5,11 @@ CC=gcc
 
 all:parse
 
-parse:grammar.c scanner.c
+parse:grammar.c scanner.c static.o
 	$(CC) $(CFLAGS) -o $@ $^
+
+static.o:static.c
+	$(CC) -c $^ -o static.o
 
 grammar.c:grammar.y
 	$(YACC) -d -o $@ --defines=grammar.tab.h $^

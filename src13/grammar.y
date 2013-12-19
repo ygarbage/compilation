@@ -1,6 +1,8 @@
 %{
     #include <stdio.h>
     #include <string.h>
+
+    #include "static.h"
     extern int yylineno;
     int yylex ();
     int yyerror ();
@@ -222,7 +224,9 @@ int main (int argc, char *argv[]) {
 	fprintf (stderr, "%s: error: no input file\n", *argv);
 	return 1;
     }
+    printTopStaticPart();
     yyparse ();
+    printBottomStaticPart();
     free (file_name);
     return 0;
 }
