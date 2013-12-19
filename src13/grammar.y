@@ -30,9 +30,9 @@
 %%
 
 primary_expression
-: IDENTIFIER {printf("%s\n", $1);};
+: IDENTIFIER {/*printf("%s\n", $1);*/};
 | CONSTANTI
-| CONSTANTF {printf("%f\n", $1);};
+| CONSTANTF {/*printf("%f\n", $1);*/};
 | '(' expression ')'
 | IDENTIFIER '(' ')'
 | IDENTIFIER '(' argument_expression_list ')'
@@ -86,7 +86,7 @@ comparison_expression
 expression
 : unary_expression assignment_operator comparison_expression {
   if (strcmp($1, "$accel") == 0) {
-    printf("store float %f, float* %%accelCmd\n", $3);
+    printf("\tstore float %f, float* %%accelCmd\n", $3);
   }
  }
 | comparison_expression
@@ -209,7 +209,7 @@ int yyerror (char *s) {
 
 int main (int argc, char *argv[]) {
     FILE *input = NULL;
-    if (argc==2) {
+    if (argc == 2) {
 	input = fopen (argv[1], "r");
 	file_name = strdup (argv[1]);
 	if (input) {
@@ -225,8 +225,10 @@ int main (int argc, char *argv[]) {
 	return 1;
     }
     printTopStaticPart();
-    yyparse ();
+    printDrivePrototypeAndFunctionTop();
+    yyparse();
+    printDriveFunctionEnd();
     printBottomStaticPart();
-    free (file_name);
+    free(file_name);
     return 0;
 }

@@ -469,3 +469,37 @@ void printBottomStaticPart(void) {
   printf("declare float @get_car_yaw(%%struct.CarElt*)\n");  
 
 }
+
+void printDrivePrototypeAndFunctionTop(void) {
+
+  /* printf("define void @drive(i32 %%index, %%struct.CarElt* %%car, %%struct.Situation* %%s) {\n"); */
+  printf("define void @drive() {\n");
+  printf("	%%ctrl		= getelementptr %%struct.CarElt* %%car, i32 0, i32 5\n");
+  printf("	%%public_car	= getelementptr %%struct.CarElt* %%car, i32 0, i32 2\n");
+  printf("	%%pos		= getelementptr %%struct.tPublicCar* %%public_car, i32 0, i32 3\n");
+  printf("	%%seg.addr	= getelementptr %%struct.tTrkLocPos* %%pos, i32 0, i32 0\n");
+  printf("	%%seg		= load %%struct.trackSeg** %%seg.addr\n\n");
+
+  printf("	%%steer		= getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 0\n");
+  printf("	%%accelCmd	= getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 1\n");
+  printf("	%%brakeCmd	= getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 2\n");
+  printf("	%%clutchCmd	= getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 3\n");
+  printf("	%%gear		= getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 4\n\n");
+
+  printf("	%%road_angle = call float @get_track_angle(%%struct.tTrkLocPos* %%pos)\n");
+  printf("	%%car_angle	= call float @get_car_yaw(%%struct.CarElt* %%car)\n");
+  printf("	%%angle		= fsub float %%road_angle, %%car_angle\n");
+  printf("	%%nangle		= call float @norm_pi_pi(float %%angle)\n\n");
+
+  printf("	%%posmid		= call float @get_pos_to_middle(%%struct.tTrkLocPos* %%pos)\n");
+  printf("	%%width		= call float @get_track_seg_width(%%struct.trackSeg* %%seg)\n");
+  printf("	%%corr		= fdiv float %%posmid, %%width\n");
+  printf("	%%cangle		= fsub float %%nangle, %%corr\n\n");
+
+}
+
+void printDriveFunctionEnd(void) {
+  printf(" 	ret void\n");
+  printf("}\n");
+}
+
