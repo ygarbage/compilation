@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "grammar.tab.h"
+#include "string.h"
 void count();
 int comment ();
 int check_type ();
@@ -20,9 +21,9 @@ L[a-zA-Z_]
 "void"		{ count(); return(VOID); }
 "while"		{ count(); return(WHILE); }
 "for"		{ count(); return(FOR); }
-[$]?{L}({L}|{D})* { count(); yylval.c = strdup(yytext); return(IDENTIFIER); }
-{D}+    	{ count(); yylval.n = atoi(yytext); return(CONSTANTI); }
-{D}+"."{D}*     { count(); yylval.n = atof(yytext); return(CONSTANTF); }
+[$]?{L}({L}|{D})*	{ count(); yylval.s = strdup(yytext); return(IDENTIFIER); }
+{D}+    	{ count(); return(CONSTANTI); }
+{D}+"."{D}*     { count(); return(CONSTANTF); }
 "+="		{ count(); return(ADD_ASSIGN); }
 "-="		{ count(); return(SUB_ASSIGN); }
 "*="		{ count(); return(MUL_ASSIGN); }
@@ -82,3 +83,4 @@ void count() {
 			column++;
 	}
 }
+

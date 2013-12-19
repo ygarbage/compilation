@@ -1,39 +1,13 @@
 %{
     #include <stdio.h>
-    #include <string.h>
     extern int yylineno;
     int yylex ();
     int yyerror ();
 
-    /* Table de hachage */
-    int hash_table[101];
-    int hash(char * c) {
-      int n = 0;
-      while (*c != '\0') {
-	n = n + 8 * *c++;
-      }
-      return n % 101;
-    }
-    
-    int reg = 0;
-
-    struct s_primary_expresssion {
-      char *type;
-      int numReg;
-      char * identifier_val;
-    };
-
 %}
 
-%union{
-  char *c ;
-  int n;
-  float f;
- }
-
-%token <c> IDENTIFIER
-%token <f> CONSTANTF
-%token <n> CONSTANTI
+%union { char * s;}
+%token IDENTIFIER CONSTANTF CONSTANTI
 %token INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP
 %token SUB_ASSIGN MUL_ASSIGN ADD_ASSIGN
 %token TYPE_NAME
@@ -41,23 +15,13 @@
 %token IF ELSE WHILE RETURN FOR
 %start program
 
-%type <c,f> primary_expression
-%type <c,f> postfix_expression
-%type <c,f> unary_expression
-
-%type <f> comparison_expression
-%type <f> additive_expression
-%type <f> multiplicative_expression
-
-%type <c> assignment_operator
-
-%type <c> expression
+%type <s> IDENTIFIER
 %%
 
 primary_expression
-: IDENTIFIER {$$.c = $1;}
+: IDENTIFIER {printf("%s\n", $1);};
 | CONSTANTI
-| CONSTANTF {$$.f = $1;}
+| CONSTANTF
 | '(' expression ')'
 | IDENTIFIER '(' ')'
 | IDENTIFIER '(' argument_expression_list ')'
@@ -109,13 +73,7 @@ comparison_expression
 ;
 
 expression
-: unary_expression assignment_operator comparison_expression {
-  if (strcmp($1, "$accel") == 0) {
-    printf("store float %f, float* %%accelCmd\n", $3);
-  }
-  /*printf("%%accelCmd = getelementptr %%struct.tCarCtrl* %%ctrl, i32 0, i32 1\n");*/
-    
- }
+: unary_expression assignment_operator comparison_expression
 | comparison_expression
 ;
 
@@ -236,7 +194,7 @@ int yyerror (char *s) {
 
 int main (int argc, char *argv[]) {
     FILE *input = NULL;
-    if (argc == 2) {
+    if (argc==2) {
 	input = fopen (argv[1], "r");
 	file_name = strdup (argv[1]);
 	if (input) {
@@ -251,7 +209,7 @@ int main (int argc, char *argv[]) {
 	fprintf (stderr, "%s: error: no input file\n", *argv);
 	return 1;
     }
-    yyparse();
-    free(file_name);
+    yyparse ();
+    free (file_name);
     return 0;
 }
