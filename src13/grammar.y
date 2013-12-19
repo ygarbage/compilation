@@ -6,7 +6,11 @@
 
 %}
 
-%union { char * s;}
+%union {
+  char * s;
+  float f;
+}
+
 %token IDENTIFIER CONSTANTF CONSTANTI
 %token INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP
 %token SUB_ASSIGN MUL_ASSIGN ADD_ASSIGN
@@ -16,12 +20,13 @@
 %start program
 
 %type <s> IDENTIFIER
+%type <f> CONSTANTF
 %%
 
 primary_expression
 : IDENTIFIER {printf("%s\n", $1);};
 | CONSTANTI
-| CONSTANTF
+| CONSTANTF {printf("%f\n", $1);};
 | '(' expression ')'
 | IDENTIFIER '(' ')'
 | IDENTIFIER '(' argument_expression_list ')'
