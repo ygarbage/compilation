@@ -1,5 +1,6 @@
 %{
     #include <stdio.h>
+    #include <string.h>
     extern int yylineno;
     int yylex ();
     int yyerror ();
@@ -21,6 +22,9 @@
 
 %type <s> IDENTIFIER
 %type <f> CONSTANTF
+
+%type <s> unary_expression
+%type <f> comparison_expression
 %%
 
 primary_expression
@@ -78,7 +82,11 @@ comparison_expression
 ;
 
 expression
-: unary_expression assignment_operator comparison_expression
+: unary_expression assignment_operator comparison_expression {
+  if (strcmp($1, "$accel") == 0) {
+    printf("store float %f, float* %%accelCmd\n", $3);
+  }
+ }
 | comparison_expression
 ;
 
