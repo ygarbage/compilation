@@ -473,7 +473,7 @@ void printBottomStaticPart(void) {
 void printDrivePrototypeAndFunctionTop(void) {
 
   printf("define void @drive(i32 %%index, %%struct.CarElt* %%car, %%struct.Situation* %%s) {\n");
-  /* printf("define void @drive() {\n"); */
+
   printf("	%%ctrl		= getelementptr %%struct.CarElt* %%car, i32 0, i32 5\n");
   printf("	%%public_car	= getelementptr %%struct.CarElt* %%car, i32 0, i32 2\n");
   printf("	%%pos		= getelementptr %%struct.tPublicCar* %%public_car, i32 0, i32 3\n");
@@ -500,6 +500,6 @@ void printDrivePrototypeAndFunctionTop(void) {
 
 void printDriveFunctionEnd(void) {
   printf(" 	ret void\n");
-  printf("}\n");
+  printf("}\n\n");
 }
 

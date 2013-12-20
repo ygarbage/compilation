@@ -18,4 +18,7 @@ scanner.c:scanner.l
 	$(LEX) -o $@ $^
 
 clean:
-	rm -f grammar.c scanner.c grammar.tab.h *~ parse
+	rm -f grammar.c scanner.c grammar.tab.h *~ parse *.o ../driver/src/drive.ll
+
+drive:parse
+	./parse robotDescription > ../driver/src/drive.ll

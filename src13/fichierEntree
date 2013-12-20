@@ -1,3 +1,0 @@
-void drive() {
-    $accel = 0.25;
-}
