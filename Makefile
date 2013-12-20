@@ -19,6 +19,7 @@ clean:
 	@echo -n "Nettoyage des fichiers temporaires.. "
 	@make clean -C src -s
 	@make clean -C driver -s
+	@rm -f driver/src/drive.ll
 	@echo "terminé."
 
 mrproper:

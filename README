@@ -24,7 +24,7 @@ Hugo Brunie, Yvon Garbage
 ---- Organisation des répertoires et fichiers ----
 hbrunie_ygarbage/
 		driver/
-		      obj/ : contient les fichiers objets intermédiaires générés pendant la compilation de la bibliothèque du robot,
+		      objs/ : contient les fichiers objets intermédiaires générés pendant la compilation de la bibliothèque du robot,
 		      src/ : contient le fichier source du robot driver.cpp, et la représentation intermédiaire LLVM générée du robot,
 		      lib/ : contient la bibliothèque générée du robot, enseirBOT.so,
 		
