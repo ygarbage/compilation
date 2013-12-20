@@ -23,7 +23,7 @@ L[a-zA-Z_]
 "while"		{ count(); return(WHILE); }
 "for"		{ count(); return(FOR); }
 [$]?{L}({L}|{D})*	{ count(); yylval.s = strdup(yytext); return(IDENTIFIER); }
-{D}+    	{ count(); return(CONSTANTI); }
+{D}+    	{ count(); yylval.f = atof(yytext); return(CONSTANTI); }
 {D}+"."{D}*             { count(); yylval.f = atof(yytext); return(CONSTANTF); }
 "+="		{ count(); return(ADD_ASSIGN); }
 "-="		{ count(); return(SUB_ASSIGN); }

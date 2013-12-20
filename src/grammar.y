@@ -22,9 +22,6 @@
 %token IF ELSE WHILE RETURN FOR
 %start program
 
-%type <s> IDENTIFIER
-%type <f> CONSTANTF
-
 %type <s> unary_expression
 %type <f> comparison_expression
 %%

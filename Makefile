@@ -1,25 +1,28 @@
-all:driver/lib/enseirbBOT.so
+all:compilateur biblio
 
-driver/lib/enseirbBOT.so:driver/src/drive.ll
-	@echo "Compiling enseirBOT.so .."
-	@make -C driver
-	@echo "enseirBOT.so compiled"
+compilateur:
+	@echo -n "Génération du compilateur LLVM.. "
+	@make -C src -s
+	@echo "terminée."
 
-driver/src/drive.ll:src/parse
-	@echo "Generating driver/src/drive.ll using parser .."
-	@make drive -C src
-	@echo "driver/src/drive.ll generated"
+llvm:compilateur
+	@echo -n "Génération de la représentation intermédiaire LLVM du robot.. "
+	@src/compilateur src/robotDescription > driver/src/drive.ll
+	@echo "terminée."
 
-src/parse:
-	@echo "Creating parser .."
-	@make -C src
-	@echo "Parser created"
+biblio:llvm
+	@echo -n "Génération de la bibliothèque enseirBOT.so.. "
+	@make -C driver -s
+	@echo "terminée."
 
 clean:
-	@echo "Cleaning driver"
-	@make clean -C driver
-	@echo "Cleaning src"	
-	@make clean -C src
+	@echo -n "Nettoyage des fichiers temporaires.. "
+	@make clean -C src -s
+	@make clean -C driver -s
+	@echo "terminé."
 
-torcs-1.3.5/src/drivers/enseirBOT/enseirBOT.so:driver/lib/enseirbBOT.so
-	@make copy -C driver
+mrproper:
+	@echo -n "Nettoyage des fichiers générés.. "
+	@make mrproper -C src -s
+	@make mrproper -C driver -s
+	@echo "terminé."
