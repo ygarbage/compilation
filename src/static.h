@@ -9,5 +9,4 @@ void printBottomStaticPart(void);
 void printDrivePrototypeAndFunctionTop(void);
 void printDriveFunctionEnd(void);
 
-#endif
-
+#endif /* STATIC_H */
