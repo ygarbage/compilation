@@ -31,5 +31,6 @@ void htable_destroy(hashtable * h);
 int htable_insert(hashtable *h,const const char * key, void* data);
 int htable_remove(hashtable* h, const const char * key);
 void* htable_get(hashtable* h, const const char *key);
+int htable_resize(hashtable *h, hsize size);
 
 #endif
