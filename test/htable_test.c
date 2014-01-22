@@ -5,17 +5,18 @@
 
 
 hsize myhashfunc(const char * key){
-
-
-  return key;
+  hsize hash=0;
+  
+  return hash;
 }
 
 int test_create__destroy(){
   hashtable* myhtable;
   hsize size=101;
-  myhtable=htable_create(size,myhashfunc);
-
-
+  myhtable=htable_create(size,NULL);
+  htable_destroy(myhtable);
+  myhtable=NULL;
+  return 1;
 }
 
 

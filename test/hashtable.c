@@ -1,13 +1,18 @@
 #include"hashtable.h"
+#include<string.h>
+#include<stdio.h>
 
 hsize def_hashfunc(const char * key){
   hsize hash=0;
-  while(*key!='\0') hash+= n+8* (unsigned char)*key++;
+  while(*key!='\0'){
+    hash+= *key+8* (unsigned char)*key;
+    (unsigned char) *key++;
+  }
   return hash;
 }
 
 
-hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*) myhashfunc){
+hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*)){
   hashtable *htable;
   if(!(htable=malloc(sizeof(hashtable)))) return NULL;
 
@@ -27,7 +32,7 @@ hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*) myhashfunc)
 void htable_destroy(hashtable *h){
   hsize n;
 
-  hashnode *struct node, *oldnode;
+  struct hashnode * node, *oldnode;
 
   for(n=0;n<h->size;n++){
     node=h->nodes[n];
@@ -65,21 +70,20 @@ int htable_insert(hashtable *h, const char *key, void* data){
   /*
     Sinon on crée un nouveau noeud qu'on insert au début de la liste chainée.
   */
-  if(!node=malloc(sizeof(struct hashnode))) return -1;
-  if(!node->key=strdup(key)){
+  if(!(node=malloc(sizeof(struct hashnode)))) return -1;
+  if(!(node->key=strdup(key))){
     free(node);
-    return -1
-      }
+    return -1;
+  }
   node->data=data;
   node->next=h->nodes[hash];
-  h->node[hash]=node;
+  h->nodes[hash]=node;
   return 0;
 }
 int htable_remove(hashtable* h, const char *key){
   struct hashnode *node,*prevnode=NULL;
   hsize hash=h->hashfunc(key)%h->size;
   node=h->nodes[hash];
-  nodetmp=h->nodes[hash];
   while(node){
     if(!strcmp(node->key,key)){
       free(node->key);
@@ -118,8 +122,8 @@ int htable_resize(hashtable *h, hsize size){
 
   for(n=0; n<h->size; ++n) {
     for(node=h->nodes[n]; node; node=node->next) {
-      h_insert(&newtbl, node->key, node->data);
-      h_remove(h, node->key);
+      htable_insert(&newtbl, node->key, node->data);
+      htable_remove(h, node->key);
 			
     }
   }
