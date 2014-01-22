@@ -1,14 +1,9 @@
 #include"hashtable.h"
 
-  int hash_table[101]; // varialbe initialisé à 0
-  hsize def_hashfunc(const char * c){
-    //TODO
-
-    /* int n=0; */
-    /* while(*c!='\0'){ */
-    /*   n=n+8* *c ++; */
-    /* } */
-    /*   return n%101;     */
+  hsize def_hashfunc(const char * key){
+    hsize hash=0;
+    while(*key!='\0') hash+= n+8* (unsigned char)*key++;
+    return hash;
   }
 
 
@@ -49,6 +44,36 @@ void htable_destroy(hashtable *h){
   free(h);
 }
 
-int htable_insert(hashtable *h,const int *key, void* data);
-int htable_remove(hashtable* h, const int *key);
-void* htable_get(hashtable* h, const int *key);
+int htable_insert(hashtable *h, const char *key, void* data){
+  struct hashnode *node;
+  hsize hash=h->hashfunc(key)%h->size;
+  
+  node=h->nodes[hash];
+
+  while(node){
+    /*
+      On cherche un noeud qui possède la même clef
+      ie le même noeud et on le met à jour.
+     */
+    if(!(strcmp(node->key,key))){
+    // mise à jour
+      node->data=data;
+      return 0;
+    }    
+    node=node->next;
+  }
+  /*
+    Sinon on crée un nouveau noeud qu'on insert au début de la liste chainée.
+   */
+  if(!node=malloc(sizeof(struct hashnode))) return -1;
+  if(!node->key=strdup(key)){
+    free(node);
+    return -1
+  }
+  node->data=data;
+  node->next=h->nodes[hash];
+  h->node[hash]=node;
+  return 0;
+}
+int htable_remove(hashtable* h, const const char *key);
+void* htable_get(hashtable* h, const const char *key);
