@@ -3,15 +3,17 @@
     #include <string.h>
 
     #include "static.h"
+    #include "variable.h"
     extern int yylineno;
     int yylex ();
     int yyerror ();
-
 %}
 
 %union {
-  char * s;
+  int i;
   float f;
+  char * s;
+  struct Variable * v;
 }
 
 %token IDENTIFIER CONSTANTF CONSTANTI

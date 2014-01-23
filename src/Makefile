@@ -5,7 +5,7 @@ CC=gcc
 
 all:compilateur
 
-compilateur:grammar.c scanner.c static.o
+compilateur:grammar.c scanner.c static.o variable.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 static.o:static.c
@@ -13,6 +13,9 @@ static.o:static.c
 
 grammar.c:grammar.y
 	$(YACC) -d -o $@ --defines=grammar.tab.h $^
+
+variable.o:variable.c
+	$(CC) -c $^ -o variable.o
 
 scanner.c:scanner.l
 	$(LEX) -o $@ $^
