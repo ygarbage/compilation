@@ -19,11 +19,12 @@
   /* int i; */
   /* float f; */
   /* char * s; */
+  char * code;
 struct Variable {
   //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
   enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
   char * name;//char name[V_NAME_SIZE];
-  char *llvm_name;
+  char * llvm_name;
   float value; // Store int in a float
   //char code[CODE_SIZE];
 } var;
@@ -54,8 +55,9 @@ primary_expression
      htable_insert(h, $1.name, (void*) &$1);
    }
    else{}
-   /* $$.name=$1.name; */
-   sprintf($$.llvm_name,"%%%sCmd",&(($1.name)[1]));
+   
+   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
+   sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
  }
 | CONSTANTI {$$.value = $1.value;}
 | CONSTANTF {$$.value = $1.value;}
