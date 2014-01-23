@@ -6,20 +6,19 @@
   //#include "variable.h"
     #include "hashtable.h"
   //#include "type.h"
-
     extern int yylineno;
     int yylex ();
     int yyerror ();
 
     struct hashtable * h = NULL;
-
+    char chartmp[1];
 %}
 
 %union {
   /* int i; */
   /* float f; */
   /* char * s; */
-  char * code;
+  char code[2048]; // je vois pas comment faire autrement.
 struct Variable {
   //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
   enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
@@ -44,7 +43,10 @@ struct Variable {
 
 %type <var> declarator primary_expression postfix_expression unary_expression multiplicative_expression additive_expression comparison_expression
 %type <var> assignment_operator
-%type <var> expression
+%type <code> expression
+%type <code> type_name 
+%type <code> statement compound_statement expression_statement statement_list
+
 %token IF ELSE WHILE RETURN FOR
 
 %start program
@@ -58,6 +60,8 @@ primary_expression
    
    $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+   perror("On est dans primary exp");
+   
  }
 | CONSTANTI {$$.value = $1.value;}
 | CONSTANTF {$$.value = $1.value;}
@@ -116,14 +120,20 @@ expression
   /* if (strcmp($1.name, "$accel") == 0) { */
   /*   printf("\tstore float %f, float* %%accelCmd\n", $3.value); */
   /* } */
-  if($2.type==OPERATOREQUAL){
-    if($3.type==REAL){
-      printf("store float %f, ",$3.value);
+  if (strcmp($1.name, "$accel") == 0){
+    if($2.type==OPERATOREQUAL){
+      if($3.type==REAL){
+	float f=$3.value;
+	sprintf(chartmp,"%f",f);
+	strcat($$,"store float ");
+	strcat($$,chartmp);
+	sprintf($$,"float* %s\n",$1.llvm_name);
+      }
     }
-    if($1.type==REALPOINTER){ printf(" float* ");}
-    printf("%s",$1.llvm_name);
-  }
-  
+    if($1.type==REALPOINTER){ 
+      printf(" float* ");
+    }
+  } 
 }
 | comparison_expression
 ;
@@ -145,9 +155,9 @@ declarator_list
 ;
 
 type_name
-: VOID  
-| INT   
-| FLOAT
+: VOID{strcpy($$,"void ");}
+| INT{strcpy($$,"int ");}   
+| FLOAT{strcpy($$,"float ");}
 ;
 
 declarator
@@ -170,7 +180,7 @@ parameter_declaration
 
 statement
 : compound_statement
-| expression_statement 
+| expression_statement{strcat($$,$1);} 
 | selection_statement
 | iteration_statement
 | jump_statement
@@ -178,7 +188,7 @@ statement
 
 compound_statement
 : '{' '}'
-| '{' statement_list '}'
+| '{' statement_list '}'{strcat($$,$2);}
 | '{' declaration_list statement_list '}'
 ;
 
@@ -188,13 +198,13 @@ declaration_list
 ;
 
 statement_list
-: statement
+: statement{strcat($$,$1);}
 | statement_list statement
 ;
 
 expression_statement
 : ';'
-| expression ';'
+| expression ';'{strcat($$,$1);}
 ;
 
 selection_statement
@@ -223,7 +233,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement
+: type_name declarator compound_statement{printf("%s\n",$1);}
 ;
 
 %%
@@ -263,12 +273,12 @@ int main (int argc, char *argv[]) {
     
     h = htable_create(101, NULL);
     
-    printTopStaticPart();
-    printDrivePrototypeAndFunctionTop();
+    //printTopStaticPart();
+    //printDrivePrototypeAndFunctionTop();
 
     yyparse();
     printDriveFunctionEnd();
-    printBottomStaticPart();
+    //printBottomStaticPart();
     free(file_name);
     htable_destroy(h);
     return 0;
