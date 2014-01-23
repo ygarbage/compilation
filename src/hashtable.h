@@ -22,23 +22,23 @@ servait de clef. De plus la fonction renvoyait directement une valeur
 
 typedef size_t hsize;
 
-typedef struct hashtable_{
+struct hashtable {
   hsize size;
   struct hashnode **nodes;
   hsize (*hashfunc)(const char*);
-} hashtable;
+};
 
 struct hashnode{
   char * key;
   void * data;
   struct hashnode * next;
-} ;
+};
 
-hashtable * htable_create(hsize size,hsize (*hashfunc)(const char*));
-void htable_destroy(hashtable * h);
-int htable_insert(hashtable *h,const char * key, void* data);
-int htable_remove(hashtable* h, const char * key);
-void* htable_get(hashtable* h, const char *key);
-int htable_resize(hashtable *h, hsize size);
+struct hashtable * htable_create(hsize size,hsize (*hashfunc)(const char*));
+void htable_destroy(struct hashtable * h);
+int htable_insert(struct hashtable *h,const char * key, void* data);
+int htable_remove(struct hashtable* h, const char * key);
+void* htable_get(struct hashtable* h, const char *key);
+int htable_resize(struct hashtable *h, hsize size);
 
 #endif

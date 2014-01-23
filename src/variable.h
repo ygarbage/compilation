@@ -15,7 +15,7 @@ typedef enum Access_ { READONLY = 0, WRITABLE = 1} Access;
 struct Variable {
   char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
   Type type;
-  char name[V_NAME_SIZE];
+  char * name;//char name[V_NAME_SIZE];
   char llvm_name[V_LLVMNAME_SIZE];
   float value; // Store int in a float
 } Variable;

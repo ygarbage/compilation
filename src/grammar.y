@@ -4,39 +4,52 @@
 
     #include "static.h"
     #include "variable.h"
+    #include "hashtable.h"
+  
     extern int yylineno;
     int yylex ();
     int yyerror ();
+
+    struct hashtable * h = NULL;
+    
 %}
 
 %union {
   int i;
   float f;
   char * s;
-  struct Variable * v;
+  struct Variable * var;
 }
 
-%token IDENTIFIER CONSTANTF CONSTANTI
+%token <s> IDENTIFIER
+%token <f> CONSTANTF
+%token <i> CONSTANTI
+
 %token INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP
 %token SUB_ASSIGN MUL_ASSIGN ADD_ASSIGN
 %token TYPE_NAME
-%token INT FLOAT VOID
+%token INT
+%token FLOAT
+%token VOID
+%type <var> declarator primary_expression postfix_expression unary_expression multiplicative_expression additive_expression comparison_expression
+%type <var> expression
 %token IF ELSE WHILE RETURN FOR
-%start program
 
-%type <s> unary_expression
-%type <f> comparison_expression
+%start program
 %%
 
 primary_expression
-: IDENTIFIER {/*printf("%s\n", $1);*/};
-| CONSTANTI
+: IDENTIFIER {if (htable_get(h, $1) == NULL) {
+     htable_insert(h, $1, $1);
+   }
+ }
+| CONSTANTI {$$->value = $1;}
 | CONSTANTF {/*printf("%f\n", $1);*/};
-| '(' expression ')'
-| IDENTIFIER '(' ')'
-| IDENTIFIER '(' argument_expression_list ')'
-| IDENTIFIER INC_OP
-| IDENTIFIER DEC_OP
+| '(' expression ')' {$$ = $2;}
+| IDENTIFIER '(' ')' {$$->name = strdup($1);}
+| IDENTIFIER '(' argument_expression_list ')' {$$->name = strndup($1, V_NAME_SIZE);}
+| IDENTIFIER INC_OP {$$->name = strdup($1);}
+| IDENTIFIER DEC_OP {$$->name = strdup($1);}
 ;
 
 postfix_expression
@@ -51,9 +64,9 @@ argument_expression_list
 
 unary_expression
 : postfix_expression
-| INC_OP unary_expression
-| DEC_OP unary_expression
-| unary_operator unary_expression
+| INC_OP unary_expression {$$ = $2;}
+| DEC_OP unary_expression {$$ = $2;}
+| unary_operator unary_expression {$$ = $2;}
 ;
 
 unary_operator
@@ -84,8 +97,8 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression {
-  if (strcmp($1, "$accel") == 0) {
-    printf("\tstore float %f, float* %%accelCmd\n", $3);
+  if (strcmp($1->name, "$accel") == 0) {
+    printf("\tstore float %f, float* %%accelCmd\n", $3->value);
   }
  }
 | comparison_expression
@@ -114,8 +127,8 @@ type_name
 ;
 
 declarator
-: IDENTIFIER  
-| '(' declarator ')'
+: IDENTIFIER {$$->name = $1;}
+| '(' declarator ')' {$$->name = strdup($2->name);}
 | declarator '[' CONSTANTI ']'
 | declarator '[' ']'
 | declarator '(' parameter_list ')'
@@ -223,11 +236,15 @@ int main (int argc, char *argv[]) {
 	fprintf (stderr, "%s: error: no input file\n", *argv);
 	return 1;
     }
+    
+    h = htable_create(101, NULL);
+    
     printTopStaticPart();
     printDrivePrototypeAndFunctionTop();
     yyparse();
     printDriveFunctionEnd();
     printBottomStaticPart();
     free(file_name);
+    htable_destroy(h);
     return 0;
 }

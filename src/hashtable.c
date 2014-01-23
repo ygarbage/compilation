@@ -12,9 +12,9 @@ hsize def_hashfunc(const char * key){
 }
 
 
-hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*)){
-  hashtable *htable;
-  if(!(htable=malloc(sizeof(hashtable)))) return NULL;
+struct hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*)){
+  struct hashtable *htable;
+  if(!(htable=malloc(sizeof(struct hashtable)))) return NULL;
 
   if(!(htable->nodes=calloc(size,sizeof(struct hashnode*)))){
     free(htable);
@@ -29,7 +29,7 @@ hashtable * htable_create(hsize size, hsize (*hashfunc)(const char*)){
 }
 
 
-void htable_destroy(hashtable *h){
+void htable_destroy(struct hashtable *h){
   hsize n;
 
   struct hashnode * node, *oldnode;
@@ -49,7 +49,7 @@ void htable_destroy(hashtable *h){
   free(h);
 }
 
-int htable_insert(hashtable *h, const char *key, void* data){
+int htable_insert(struct hashtable *h, const char *key, void* data){
   struct hashnode *node;
   hsize hash=h->hashfunc(key)%h->size;
   
@@ -80,7 +80,7 @@ int htable_insert(hashtable *h, const char *key, void* data){
   h->nodes[hash]=node;
   return 0;
 }
-int htable_remove(hashtable* h, const char *key){
+int htable_remove(struct hashtable* h, const char *key){
   struct hashnode *node,*prevnode=NULL;
   hsize hash=h->hashfunc(key)%h->size;
   node=h->nodes[hash];
@@ -99,7 +99,7 @@ int htable_remove(hashtable* h, const char *key){
   return -1;
 }
 
-void* htable_get(hashtable* h, const char *key){
+void* htable_get(struct hashtable* h, const char *key){
   struct hashnode* node;
   hsize hash=h->hashfunc(key)%h->size;
   node=h->nodes[hash];
@@ -110,8 +110,8 @@ void* htable_get(hashtable* h, const char *key){
   return NULL;
 }
 
-int htable_resize(hashtable *h, hsize size){
-  hashtable newtbl;
+int htable_resize(struct hashtable *h, hsize size){
+  struct hashtable newtbl;
   hsize n;
   struct hashnode *node;
 
