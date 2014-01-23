@@ -3,35 +3,46 @@
     #include <string.h>
 
     #include "static.h"
-    #include "variable.h"
+  //#include "variable.h"
     #include "hashtable.h"
-  
+  //#include "type.h"
+
     extern int yylineno;
     int yylex ();
     int yyerror ();
 
     struct hashtable * h = NULL;
-    
+
 %}
 
 %union {
-  int i;
-  float f;
-  char * s;
-  struct Variable * var;
+  /* int i; */
+  /* float f; */
+  /* char * s; */
+struct Variable {
+  //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
+  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
+  char * name;//char name[V_NAME_SIZE];
+  char *llvm_name;
+  float value; // Store int in a float
+  //char code[CODE_SIZE];
+} var;
+
 }
 
-%token <s> IDENTIFIER
-%token <f> CONSTANTF
-%token <i> CONSTANTI
+%token <var> IDENTIFIER
+%token <var> CONSTANTF
+%token <var> CONSTANTI
 
 %token INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP
-%token SUB_ASSIGN MUL_ASSIGN ADD_ASSIGN
+%token <var> SUB_ASSIGN MUL_ASSIGN ADD_ASSIGN
 %token TYPE_NAME
 %token INT
 %token FLOAT
 %token VOID
+
 %type <var> declarator primary_expression postfix_expression unary_expression multiplicative_expression additive_expression comparison_expression
+%type <var> assignment_operator
 %type <var> expression
 %token IF ELSE WHILE RETURN FOR
 
@@ -39,21 +50,24 @@
 %%
 
 primary_expression
-: IDENTIFIER {if (htable_get(h, $1) == NULL) {
-     htable_insert(h, $1, $1);
+: IDENTIFIER {if (htable_get(h, $1.name) == NULL) {
+     htable_insert(h, $1.name, (void*) &$1);
    }
+   else{}
+   /* $$.name=$1.name; */
+   sprintf($$.llvm_name,"%%%sCmd",&(($1.name)[1]));
  }
-| CONSTANTI {$$->value = $1;}
-| CONSTANTF {/*printf("%f\n", $1);*/};
-| '(' expression ')' {$$ = $2;}
-| IDENTIFIER '(' ')' {$$->name = strdup($1);}
-| IDENTIFIER '(' argument_expression_list ')' {$$->name = strndup($1, V_NAME_SIZE);}
-| IDENTIFIER INC_OP {$$->name = strdup($1);}
-| IDENTIFIER DEC_OP {$$->name = strdup($1);}
+| CONSTANTI {$$.value = $1.value;}
+| CONSTANTF {$$.value = $1.value;}
+| '(' expression ')' {/*$$ = $2;*/}
+| IDENTIFIER '(' ')' {}
+| IDENTIFIER '(' argument_expression_list ')' {}
+| IDENTIFIER INC_OP {}
+| IDENTIFIER DEC_OP {}
 ;
 
 postfix_expression
-: primary_expression
+: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;}
 | postfix_expression '[' expression ']'
 ;
 
@@ -63,7 +77,7 @@ argument_expression_list
 ;
 
 unary_expression
-: postfix_expression
+: postfix_expression{$$.value=$1.value;}
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
 | unary_operator unary_expression {$$ = $2;}
@@ -74,19 +88,19 @@ unary_operator
 ;
 
 multiplicative_expression
-: unary_expression
+: unary_expression{$$.value=$1.value;}
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
 ;
 
 additive_expression
-: multiplicative_expression
+: multiplicative_expression{$$.value=$1.value;}
 | additive_expression '+' multiplicative_expression
 | additive_expression '-' multiplicative_expression
 ;
 
 comparison_expression
-: additive_expression
+: additive_expression{$$.value=$1.value;}
 | additive_expression '<' additive_expression
 | additive_expression '>' additive_expression
 | additive_expression LE_OP additive_expression
@@ -97,15 +111,23 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression {
-  if (strcmp($1->name, "$accel") == 0) {
-    printf("\tstore float %f, float* %%accelCmd\n", $3->value);
+  /* if (strcmp($1.name, "$accel") == 0) { */
+  /*   printf("\tstore float %f, float* %%accelCmd\n", $3.value); */
+  /* } */
+  if($2.type==OPERATOREQUAL){
+    if($3.type==REAL){
+      printf("store float %f, ",$3.value);
+    }
+    if($1.type==REALPOINTER){ printf(" float* ");}
+    printf("%s",$1.llvm_name);
   }
- }
+  
+}
 | comparison_expression
 ;
 
 assignment_operator
-: '='
+: '='{$$.type=OPERATOREQUAL;}
 | MUL_ASSIGN
 | ADD_ASSIGN
 | SUB_ASSIGN
@@ -127,8 +149,8 @@ type_name
 ;
 
 declarator
-: IDENTIFIER {$$->name = $1;}
-| '(' declarator ')' {$$->name = strdup($2->name);}
+: IDENTIFIER {$$.name = $1.name;}
+| '(' declarator ')' {$$.name = strdup($2.name);}
 | declarator '[' CONSTANTI ']'
 | declarator '[' ']'
 | declarator '(' parameter_list ')'
@@ -241,6 +263,7 @@ int main (int argc, char *argv[]) {
     
     printTopStaticPart();
     printDrivePrototypeAndFunctionTop();
+
     yyparse();
     printDriveFunctionEnd();
     printBottomStaticPart();

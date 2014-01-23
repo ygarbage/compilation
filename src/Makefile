@@ -1,11 +1,11 @@
 LEX=lex
 YACC=yacc
-CFLAGS=-Wall
+CFLAGS=-Wall -g
 CC=gcc
 
 all:compilateur
 
-compilateur:grammar.c scanner.c static.o variable.o hashtable.o
+compilateur:grammar.c scanner.c static.o hashtable.o  #variable.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 static.o:static.c
@@ -17,8 +17,8 @@ grammar.c:grammar.y
 hashtable.o:hashtable.c
 	$(CC) -c $^ -o hashtable.o
 
-variable.o:variable.c
-	$(CC) -c $^ -o variable.o
+# variable.o:variable.c
+# 	$(CC) -c $^ -o variable.o
 
 scanner.c:scanner.l
 	$(LEX) -o $@ $^
