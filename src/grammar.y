@@ -1,32 +1,33 @@
 %{
-    #include <stdio.h>
-    #include <string.h>
+#include <stdio.h>
+#include <string.h>
 
-    #include "static.h"
+#include "static.h"
   //#include "variable.h"
-    #include "hashtable.h"
+#include "hashtable.h"
   //#include "type.h"
-    extern int yylineno;
-    int yylex ();
-    int yyerror ();
+  extern int yylineno;
+  int yylex ();
+  int yyerror ();
 
-    struct hashtable * h = NULL;
-    char chartmp[1];
-%}
+  struct hashtable * h = NULL;
+  //char chartmp[1];
+  %}
 
 %union {
   /* int i; */
   /* float f; */
   /* char * s; */
   char code[2048]; // je vois pas comment faire autrement.
-struct Variable {
-  //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
-  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
-  char * name;//char name[V_NAME_SIZE];
-  char * llvm_name;
-  float value; // Store int in a float
-  //char code[CODE_SIZE];
-} var;
+  struct Variable {
+    //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
+    enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
+    char * name;//char name[V_NAME_SIZE];
+    char * llvm_name;
+    char code[2048];
+    float value; // Store int in a float
+    //char code[CODE_SIZE];
+  } var;
 
 }
 
@@ -60,11 +61,11 @@ primary_expression
    
    $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-   perror("On est dans primary exp");
+   perror("Primary Expression IDENTIFIER");
    
  }
-| CONSTANTI {$$.value = $1.value;}
-| CONSTANTF {$$.value = $1.value;}
+| CONSTANTI {$$.value = $1.value;perror("Primary Expression CONSTANTI");}
+| CONSTANTF {$$.value = $1.value;perror("Primary Expression CONSTANTF");}
 | '(' expression ')' {/*$$ = $2;*/}
 | IDENTIFIER '(' ')' {}
 | IDENTIFIER '(' argument_expression_list ')' {}
@@ -73,7 +74,7 @@ primary_expression
 ;
 
 postfix_expression
-: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;}
+: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;perror("Postfix Expression");}
 | postfix_expression '[' expression ']'
 ;
 
@@ -83,7 +84,7 @@ argument_expression_list
 ;
 
 unary_expression
-: postfix_expression{$$.value=$1.value;}
+: postfix_expression{$$.value=$1.value; perror("Unary Expression");}
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
 | unary_operator unary_expression {$$ = $2;}
@@ -94,19 +95,19 @@ unary_operator
 ;
 
 multiplicative_expression
-: unary_expression{$$.value=$1.value;}
+: unary_expression{$$.value=$1.value;perror("Multi Expression");}
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
 ;
 
 additive_expression
-: multiplicative_expression{$$.value=$1.value;}
+: multiplicative_expression{$$.value=$1.value;perror("Addi Expression");}
 | additive_expression '+' multiplicative_expression
 | additive_expression '-' multiplicative_expression
 ;
 
 comparison_expression
-: additive_expression{$$.value=$1.value;}
+: additive_expression{$$.value=$1.value;perror("Comparison Expression");}
 | additive_expression '<' additive_expression
 | additive_expression '>' additive_expression
 | additive_expression LE_OP additive_expression
@@ -116,30 +117,45 @@ comparison_expression
 ;
 
 expression
-: unary_expression assignment_operator comparison_expression {
+: unary_expression assignment_operator comparison_expression  {
   /* if (strcmp($1.name, "$accel") == 0) { */
   /*   printf("\tstore float %f, float* %%accelCmd\n", $3.value); */
   /* } */
+
   if (strcmp($1.name, "$accel") == 0){
+    perror("exp st $accel");
     if($2.type==OPERATOREQUAL){
+      perror("exp st $accel =");
       if($3.type==REAL){
-	float f=$3.value;
-	sprintf(chartmp,"%f",f);
-	strcat($$,"store float ");
-	strcat($$,chartmp);
-	sprintf($$,"float* %s\n",$1.llvm_name);
+	/* float f=$3.value; */
+	/* sprintf(chartmp,"%f",f); */
+	/* strcat($$,"store float "); */
+	/* strcat($$,chartmp); */
+	/* sprintf($$,"float* %s\n",$1.llvm_name); */
       }
-    }
-    if($1.type==REALPOINTER){ 
-      printf(" float* ");
-    }
-  } 
-}
+      if($3.type==INTEGER){
+	//printf("EXPRESSION%s!!!",$$);
+	int i=$3.value;
+	//sprintf(chartmp,"%d",i);
+	//sprintf($$,"%s = ",$1.llvm_name);
+	strcat($$,"add i32 ");
+	//sprintf($$,"%d, 0",(int)$3.value);
+	/*TROUVER UNE ALTERNATIVE AU SPRINTF QUI ECRASE*/
+	//sprintf($$,"float* %s\n",$1.llvm_name);
+	printf("EXPRESSION%s!!!",$$);
+	//perror("exp st $accel int");
+      }
+      if($1.type==REALPOINTER){ 
+	printf(" float* ");
+      }
+    } 
+  }
+ }
 | comparison_expression
 ;
 
 assignment_operator
-: '='{$$.type=OPERATOREQUAL;}
+: '='{$$.type=OPERATOREQUAL;perror("Assigment Operator");}
 | MUL_ASSIGN
 | ADD_ASSIGN
 | SUB_ASSIGN
@@ -161,12 +177,12 @@ type_name
 ;
 
 declarator
-: IDENTIFIER {$$.name = $1.name;}
-| '(' declarator ')' {$$.name = strdup($2.name);}
+: IDENTIFIER {$$.name = $1.name; }
+| '(' declarator ')' {$$.name = strdup($2.name); sprintf($$.code,"(%s)",$$.name); }
 | declarator '[' CONSTANTI ']'
 | declarator '[' ']'
-| declarator '(' parameter_list ')'
-| declarator '(' ')'
+| declarator '(' parameter_list ')' {}
+| declarator '(' ')' {$$.name = strdup($1.name); sprintf($$.code,"%s ()",$$.name);}
 ;
 
 parameter_list
@@ -180,7 +196,7 @@ parameter_declaration
 
 statement
 : compound_statement
-| expression_statement{strcat($$,$1);} 
+| expression_statement{strcpy($$,$1);printf("%s",$$);} 
 | selection_statement
 | iteration_statement
 | jump_statement
@@ -188,7 +204,7 @@ statement
 
 compound_statement
 : '{' '}'
-| '{' statement_list '}'{strcat($$,$2);}
+| '{' statement_list '}'{strcpy($$,$2); }
 | '{' declaration_list statement_list '}'
 ;
 
@@ -198,13 +214,13 @@ declaration_list
 ;
 
 statement_list
-: statement{strcat($$,$1);}
+: statement{strcpy($$,$1);}
 | statement_list statement
 ;
 
 expression_statement
 : ';'
-| expression ';'{strcat($$,$1);}
+| expression ';'{strcpy($$,$1);}
 ;
 
 selection_statement
@@ -233,7 +249,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("%s\n",$1);}
+: type_name declarator compound_statement{printf("%s",$1); printf("%s ",$2.code); printf("{\n %s \n}\n",$3);}
 ;
 
 %%
@@ -247,39 +263,39 @@ extern FILE *yyin;
 char *file_name = NULL;
 
 int yyerror (char *s) {
-    fflush (stdout);
-    fprintf (stderr, "%s:%d:%d: %s\n", file_name, yylineno, column, s);
-    return 0;
+  fflush (stdout);
+  fprintf (stderr, "%s:%d:%d: %s\n", file_name, yylineno, column, s);
+  return 0;
 }
 
 
 int main (int argc, char *argv[]) {
-    FILE *input = NULL;
-    if (argc == 2) {
-	input = fopen (argv[1], "r");
-	file_name = strdup (argv[1]);
-	if (input) {
-	    yyin = input;
-	}
-	else {
-	  fprintf (stderr, "%s: Could not open %s\n", *argv, argv[1]);
-	    return 1;
-	}
+  FILE *input = NULL;
+  if (argc == 2) {
+    input = fopen (argv[1], "r");
+    file_name = strdup (argv[1]);
+    if (input) {
+      yyin = input;
     }
     else {
-	fprintf (stderr, "%s: error: no input file\n", *argv);
-	return 1;
+      fprintf (stderr, "%s: Could not open %s\n", *argv, argv[1]);
+      return 1;
     }
+  }
+  else {
+    fprintf (stderr, "%s: error: no input file\n", *argv);
+    return 1;
+  }
     
-    h = htable_create(101, NULL);
+  h = htable_create(101, NULL);
     
-    //printTopStaticPart();
-    //printDrivePrototypeAndFunctionTop();
+  //printTopStaticPart();
+  //printDrivePrototypeAndFunctionTop();
 
-    yyparse();
-    printDriveFunctionEnd();
-    //printBottomStaticPart();
-    free(file_name);
-    htable_destroy(h);
-    return 0;
+  yyparse();
+  //printDriveFunctionEnd();
+  //printBottomStaticPart();
+  free(file_name);
+  htable_destroy(h);
+  return 0;
 }
