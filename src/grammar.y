@@ -11,7 +11,7 @@
   int yyerror ();
 
   struct hashtable * h = NULL;
-  //char chartmp[1];
+  char tmpnumber[20];
   %}
 
 %union {
@@ -61,11 +61,11 @@ primary_expression
    
    $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-   perror("Primary Expression IDENTIFIER");
+   //perror("Primary Expression IDENTIFIER");
    
  }
-| CONSTANTI {$$.value = $1.value;perror("Primary Expression CONSTANTI");}
-| CONSTANTF {$$.value = $1.value;perror("Primary Expression CONSTANTF");}
+| CONSTANTI {$$.value = $1.value;}
+| CONSTANTF {$$.value = $1.value;}
 | '(' expression ')' {/*$$ = $2;*/}
 | IDENTIFIER '(' ')' {}
 | IDENTIFIER '(' argument_expression_list ')' {}
@@ -74,7 +74,7 @@ primary_expression
 ;
 
 postfix_expression
-: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;perror("Postfix Expression");}
+: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;}
 | postfix_expression '[' expression ']'
 ;
 
@@ -84,7 +84,7 @@ argument_expression_list
 ;
 
 unary_expression
-: postfix_expression{$$.value=$1.value; perror("Unary Expression");}
+: postfix_expression{$$.value=$1.value; }
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
 | unary_operator unary_expression {$$ = $2;}
@@ -95,19 +95,19 @@ unary_operator
 ;
 
 multiplicative_expression
-: unary_expression{$$.value=$1.value;perror("Multi Expression");}
+: unary_expression{$$.value=$1.value;}
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
 ;
 
 additive_expression
-: multiplicative_expression{$$.value=$1.value;perror("Addi Expression");}
+: multiplicative_expression{$$.value=$1.value;}
 | additive_expression '+' multiplicative_expression
 | additive_expression '-' multiplicative_expression
 ;
 
 comparison_expression
-: additive_expression{$$.value=$1.value;perror("Comparison Expression");}
+: additive_expression{$$.value=$1.value;}
 | additive_expression '<' additive_expression
 | additive_expression '>' additive_expression
 | additive_expression LE_OP additive_expression
@@ -123,9 +123,9 @@ expression
   /* } */
 
   if (strcmp($1.name, "$accel") == 0){
-    perror("exp st $accel");
+    //perror("exp st $accel");
     if($2.type==OPERATOREQUAL){
-      perror("exp st $accel =");
+      //perror("exp st $accel =");
       if($3.type==REAL){
 	/* float f=$3.value; */
 	/* sprintf(chartmp,"%f",f); */
@@ -134,16 +134,10 @@ expression
 	/* sprintf($$,"float* %s\n",$1.llvm_name); */
       }
       if($3.type==INTEGER){
-	//printf("EXPRESSION%s!!!",$$);
-	int i=$3.value;
-	//sprintf(chartmp,"%d",i);
-	//sprintf($$,"%s = ",$1.llvm_name);
-	strcat($$,"add i32 ");
-	//sprintf($$,"%d, 0",(int)$3.value);
-	/*TROUVER UNE ALTERNATIVE AU SPRINTF QUI ECRASE*/
-	//sprintf($$,"float* %s\n",$1.llvm_name);
-	printf("EXPRESSION%s!!!",$$);
-	//perror("exp st $accel int");
+	sprintf(tmpnumber,"%d",(int)$3.value);
+	strcat($$,$1.llvm_name);
+	strcat($$," = add i32 0, ");
+	strcat($$,tmpnumber);
       }
       if($1.type==REALPOINTER){ 
 	printf(" float* ");
@@ -155,7 +149,7 @@ expression
 ;
 
 assignment_operator
-: '='{$$.type=OPERATOREQUAL;perror("Assigment Operator");}
+: '='{$$.type=OPERATOREQUAL;}
 | MUL_ASSIGN
 | ADD_ASSIGN
 | SUB_ASSIGN
@@ -196,7 +190,7 @@ parameter_declaration
 
 statement
 : compound_statement
-| expression_statement{strcpy($$,$1);printf("%s",$$);} 
+| expression_statement{strcpy($$,$1);} 
 | selection_statement
 | iteration_statement
 | jump_statement
