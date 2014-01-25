@@ -66,31 +66,61 @@
 
 primary_expression
 : IDENTIFIER {
-     printf("key :%s\n",$1.name);
-     perror("ID not in htable yet");
-     htable_insert(h, $1.name, (void*) &$1);
-   //copy of var name from ID to primary expression
-   strcpy($$.name,$1.name);
-   
-   //creation of llvm_name from ID to primary expression
-   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-   sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-   //the value is in the htable. key==name (NOT LLVM NAME)
-   printf("in htable key : %s nom : %s \n",$$.name,((struct Variable *)htable_get(h,$$.name))->name);
-   //perror("Primary Expression IDENTIFIER");
-   
+  //copy of type if element already exists in htable
+  if(NULL!=htable_get(h,$1.name)){
+    enum Type t= ((struct Variable *)htable_get(h,$1.name))->type; 
+    $1.type=t;
+  }
+  //copy of var name from ID to primary expression
+  strcpy($$.name,$1.name);
+  //creation of llvm_name from ID to primary expression
+  $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
+  sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+  $1.llvm_name=malloc(strlen($1.name + 10) * sizeof(char));
+  strcpy($1.llvm_name,$$.llvm_name);
+  //the value is in the htable. key==name (NOT LLVM NAME)
+  htable_insert(h, $1.name, (void*) &$1);
+
  }
 | CONSTANTI {$$.value = $1.value;}
 | CONSTANTF {$$.value = $1.value;}
-| '(' expression ')' {/*$$ = $2;*/}
-| IDENTIFIER '(' ')' {}
+| '(' expression ')' {
+  strcpy($$.code,"(");
+  strcat($$.code,$2);
+  /*Peut etre source de BOG
+    car concaténation.
+   */
+  strcat($$.code,")");
+  }
+| IDENTIFIER '(' ')' {
+  //copy of var name from ID to primary expression
+  strcpy($$.name,$1.name);
+  //creation of llvm_name from ID to primary expression
+  $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
+  sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+  $1.llvm_name=malloc(strlen($1.name + 10) * sizeof(char));
+  strcpy($1.llvm_name,$$.llvm_name);
+  //the value is in the htable. key==name (NOT LLVM NAME)
+  htable_insert(h, $1.name, (void*) &$1);
+  /*
+    Construction du code ??
+   */
+  //$$.code
+}
 | IDENTIFIER '(' argument_expression_list ')' {}
 | IDENTIFIER INC_OP {}
 | IDENTIFIER DEC_OP {}
 ;
 
 postfix_expression
-: primary_expression {$$.value=$1.value; $$.llvm_name=$1.llvm_name;}
+: primary_expression {
+  //copy of value
+  $$.value=$1.value;
+  //copy of llvm_name
+  $$.llvm_name=$1.llvm_name;
+  //copy of name
+  $$.name=$1.name;
+ }
 | postfix_expression '[' expression ']'
 ;
 
