@@ -12,7 +12,19 @@
   struct hashtable * h = NULL;
   char tmpnumber[20];
 
+  char *get_type_string(enum Type t){
+    switch(t){
+    case(REAL):
+      return "float ";
+      break;
+    case(EMPTY):
+      return "void ";
+      break;
+    default:
+      return NULL;
 
+    }
+  }
 
   %}
 
@@ -53,12 +65,10 @@
 %%
 
 primary_expression
-: IDENTIFIER {if (htable_get(h, $1.name) == NULL) {
+: IDENTIFIER {
      printf("key :%s\n",$1.name);
      perror("ID not in htable yet");
      htable_insert(h, $1.name, (void*) &$1);
-   }
-   else{}
    //copy of var name from ID to primary expression
    strcpy($$.name,$1.name);
    
@@ -66,7 +76,7 @@ primary_expression
    $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
    //the value is in the htable. key==name (NOT LLVM NAME)
-   printf("in htable key : %s value : %s \n",$$.name,((struct Variable *)htable_get(h,$$.name))->name);
+   printf("in htable key : %s nom : %s \n",$$.name,((struct Variable *)htable_get(h,$$.name))->name);
    //perror("Primary Expression IDENTIFIER");
    
  }
@@ -163,7 +173,9 @@ assignment_operator
 
 declaration
 : type_name declarator_list ';' {
+  strcat($2,";");
   htable_insert_list(h,$1,$2);
+  //printf("angle ? hashage %d \n",((struct Variable *)htable_get(h,"angle"))->type);
   // Be Carefull a declaration is not printed
   // in the llvm code.
   /*jump a line after each declaration
@@ -177,18 +189,18 @@ declaration
 ;
 
 declarator_list
-: declarator
-| declarator_list ',' declarator
+: declarator {strcpy($$,$1.name);}
+| declarator_list ',' declarator{strcat($1,",");strcat($1,$3.name);strcpy($$,$1);}
 ;
 
 type_name
-: VOID{}
+: VOID{$$=EMPTY;}
 | INT{}   
-| FLOAT{$$=REAL);/* strcpy($$,"float "); */}
+| FLOAT{$$=REAL;/* strcpy($$,"float "); */}
 ;
 
 declarator
-: IDENTIFIER {$$.name = $1.name;
+: IDENTIFIER {$$.name= $1.name;
    htable_insert(h,$1.name,(void *)&$1);
  }
 | '(' declarator ')' {$$.name = strdup($2.name); sprintf($$.code,"(%s)",$$.name); }
@@ -262,7 +274,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("%s",$1); printf("%s ",$2.code); printf("{\n %s \n}\n",$3);}
+: type_name declarator compound_statement{printf("%s",get_type_string($1)); printf("%s ",$2.code); printf("{\n %s \n}\n",$3);}
 ;
 
 %%

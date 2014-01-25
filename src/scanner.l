@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "hashtable.h"
 #include "grammar.tab.h"
-#include <string.h>
+
+
 
 
 void count();
