@@ -9,22 +9,28 @@
   int yylex ();
   int yyerror ();
 
+  //debug
+  int i=0;
+
   struct hashtable * h = NULL;
   char tmpnumber[20];
+  unsigned int reg=0;
 
-  char *get_type_string(enum Type t){
-    switch(t){
-    case(REAL):
-      return "float ";
-      break;
-    case(EMPTY):
-      return "void ";
-      break;
-    default:
-      return NULL;
 
-    }
+char *get_type_string(enum Type t){
+  switch(t){
+  case(REAL):
+    return "float ";
+    break;
+  case(EMPTY):
+    return "void ";
+    break;
+  default:
+    return NULL;
+
   }
+}
+
 
   %}
 
@@ -66,47 +72,44 @@
 
 primary_expression
 : IDENTIFIER {
-  //copy of type if element already exists in htable
+  //copy of the type of the identifier in a tampon only if
+  //the element already exists in the htable.
+  //In order to not overwrite it with nothing, losing information.
   if(NULL!=htable_get(h,$1.name)){
     enum Type t= ((struct Variable *)htable_get(h,$1.name))->type; 
-    $1.type=t;
+    $$.type=t;
+    printf("TYPE = %d \n",t);
   }
+
   //copy of var name from ID to primary expression
   strcpy($$.name,$1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-  sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-  $1.llvm_name=malloc(strlen($1.name + 10) * sizeof(char));
-  strcpy($1.llvm_name,$$.llvm_name);
-  //the value is in the htable. key==name (NOT LLVM NAME)
-  htable_insert(h, $1.name, (void*) &$1);
+  if(strcmp($1.name,"$accel")==0){
+    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+  }
 
+  else{
+    sprintf($$.llvm_name,"%%%s%d", $1.name,reg++);
+  }
+  //Here it's a variable that goes in the htable
+  $$.cmpt=VAR;
+  //the value is in the htable. key==name (NOT LLVM NAME)
+  htable_insert(h, $$.name, (void*) &$$);
+  printf("LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);
  }
-| CONSTANTI {$$.value = $1.value;}
-| CONSTANTF {$$.value = $1.value;}
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST;}
+| CONSTANTF {$$.value = $1.value; $$.cmpt=CST;}
 | '(' expression ')' {
   strcpy($$.code,"(");
   strcat($$.code,$2);
   /*Peut etre source de BOG
     car concaténation.
-   */
+  */
   strcat($$.code,")");
   }
 | IDENTIFIER '(' ')' {
-  //copy of var name from ID to primary expression
-  strcpy($$.name,$1.name);
-  //creation of llvm_name from ID to primary expression
-  $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-  sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-  $1.llvm_name=malloc(strlen($1.name + 10) * sizeof(char));
-  strcpy($1.llvm_name,$$.llvm_name);
-  //the value is in the htable. key==name (NOT LLVM NAME)
-  htable_insert(h, $1.name, (void*) &$1);
-  /*
-    Construction du code ??
-   */
-  //$$.code
-}
+  }
 | IDENTIFIER '(' argument_expression_list ')' {}
 | IDENTIFIER INC_OP {}
 | IDENTIFIER DEC_OP {}
@@ -114,12 +117,18 @@ primary_expression
 
 postfix_expression
 : primary_expression {
-  //copy of value
-  $$.value=$1.value;
-  //copy of llvm_name
-  $$.llvm_name=$1.llvm_name;
-  //copy of name
-  $$.name=$1.name;
+  if($1.cmpt==CST){
+    //copy of value
+    $$.value=$1.value;
+    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+  }
+  else{
+    //copy of llvm_name
+    $$.llvm_name=$1.llvm_name;
+    //copy of name
+    $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
+  }
  }
 | postfix_expression '[' expression ']'
 ;
@@ -130,7 +139,20 @@ argument_expression_list
 ;
 
 unary_expression
-: postfix_expression{$$.value=$1.value; }
+: postfix_expression{
+  if($1.cmpt==CST){
+    //copy of value
+    $$.value=$1.value;
+    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+  }
+  else{
+    //copy of llvm_name
+    $$.llvm_name=$1.llvm_name;
+    //copy of name
+    $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
+  }
+ }
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
 | unary_operator unary_expression {$$ = $2;}
@@ -141,19 +163,56 @@ unary_operator
 ;
 
 multiplicative_expression
-: unary_expression{$$.value=$1.value;}
+: unary_expression{
+  if($1.cmpt==CST){
+    //copy of value
+    $$.value=$1.value;
+    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+  }
+  else{
+    //copy of llvm_name
+    $$.llvm_name=$1.llvm_name;
+    //copy of name
+    $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  }
+ }
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
 ;
 
 additive_expression
-: multiplicative_expression{$$.value=$1.value;}
+: multiplicative_expression{
+  if($1.cmpt==CST){
+    //copy of value
+    $$.value=$1.value;
+    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+  }
+  else{
+    //copy of llvm_name
+    $$.llvm_name=$1.llvm_name;
+    //copy of name
+    $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
+  }
+ }
 | additive_expression '+' multiplicative_expression
 | additive_expression '-' multiplicative_expression
 ;
 
 comparison_expression
-: additive_expression{$$.value=$1.value;}
+: additive_expression{
+  if($1.cmpt==CST){
+    //copy of value
+    $$.value=$1.value;
+  }
+  else{
+    //copy of llvm_name
+    $$.llvm_name=$1.llvm_name;
+    //copy of name
+    $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
+  }
+ } 
 | additive_expression '<' additive_expression
 | additive_expression '>' additive_expression
 | additive_expression LE_OP additive_expression
@@ -164,63 +223,60 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression  {
-  /* if (strcmp($1.name, "$accel") == 0) { */
-  /*   printf("\tstore float %f, float* %%accelCmd\n", $3.value); */
-  /* } */
+  strcpy($$,""); // avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
-
-    printf("Affectation..\n");
-
-    struct Variable * var_left = malloc(sizeof(struct Variable));
-    struct Variable * var_right = malloc(sizeof(struct Variable));
-    var_left = (struct Variable *) htable_get(h, $1.name);
-    var_right = (struct Variable *) htable_get(h, $3.name);
-    
-    /* Debug */
-    printf("unary_expression name : %s\n", $1.name);
-    printf("name : %s\n", var_left->name);
-    printf("type : %d\n", var_left->type);
-    printf("comparison_expression name : %s\n", $3.name);
-    printf("name : %s\n", var_right->name);
-    printf("type : %d\n", var_right->type);
-    /* Debug */
-    
-    if (var_left->type != var_right->type) {
-      yyerror("Erreur : impossible d'affecter un %s dans un %s !\n", get_type_string(var_right->type), get_type_string(var_left->type));
+    //debug
+    if(((struct Variable *)htable_get(h,$1.name))->type
+       != ((struct Variable *)htable_get(h,$1.name))->type){
+      yyerror("Erreur de type");
     }
+    
+    else{
+      //struct Variable * var_right=malloc(sizeof(struct Variable));
+      //var_right=htable_get(h,$3.name);
       
-    switch (var_left->type) {
-    case REAL :
-      printf("%s = fadd %f, 0.0\n", var_left->llvm_name, $3.value);
-      break;
-    default:
-      printf("default\n");
+      strcat($$,$1.llvm_name);
+      if($3.cmpt==VAR){
+	switch($1.type){
+	case(REAL):
+	  strcat($$," = fadd float 0.0, ");
+	  strcat($$,$3.llvm_name);
+	  break;
+	case(INTEGER):
+	  sprintf(tmpnumber,"%d",(int)$3.value);
+	  strcat($$," = add i32 0, ");
+	  strcat($$,tmpnumber);
+	  break;
+	case(REALPOINTER):
+	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  break;
+	default:
+	  perror("DEFAULT var");
+	}
+      }
+      else{
+	switch($1.type){
+	case(REAL):
+	  sprintf(tmpnumber,"%f",$3.value);
+	  strcat($$," = fadd float 0.0, ");
+	  strcat($$,tmpnumber);
+	  break;
+	case(INTEGER):
+	  sprintf(tmpnumber,"%d",(int)$3.value);
+	  strcat($$," = add i32 0, ");
+	  strcat($$,tmpnumber);
+	  break;
+	case(REALPOINTER):
+	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  break;
+	default:
+	  perror("DEFAULT cst");
+	}
+      }
     }
-    
-  }
-  if (strcmp($1.name, "$accel") == 0) {
-    //perror("exp st $accel");
-    if($2.type==OPERATOREQUAL){
-      //perror("exp st $accel =");
-      if($3.type==REAL){
-	/* float f=$3.value; */
-	/* sprintf(chartmp,"%f",f); */
-	/* strcat($$,"store float "); */
-	/* strcat($$,chartmp); */
-	/* sprintf($$,"float* %s\n",$1.llvm_name); */
-      }
-      if($3.type==INTEGER){
-	sprintf(tmpnumber,"%d",(int)$3.value);
-	strcat($$,$1.llvm_name);
-	strcat($$," = add i32 0, ");
-	strcat($$,tmpnumber);
-      }
-      if($1.type==REALPOINTER){ 
-	printf(" float* ");
-      }
-    } 
   }
  }
+
 | comparison_expression
 ;
 
@@ -235,15 +291,8 @@ declaration
 : type_name declarator_list ';' {
   strcat($2,";");
   htable_insert_list(h,$1,$2);
-  //printf("angle ? hashage %d \n",((struct Variable *)htable_get(h,"angle"))->type);
-  // Be Carefull a declaration is not printed
-  // in the llvm code.
-  /*jump a line after each declaration
-  //strcat($2,"\n"); 
-  // copy the declarators' list into type name
-  //strcat($1,$2); 
-  // copy the whole thing into declaration
-  //strcpy($$,$1); */
+  //Avoid a print bog :
+  strcpy($$,"");
   
  }
 ;
@@ -255,19 +304,26 @@ declarator_list
 
 type_name
 : VOID{$$=EMPTY;}
-| INT{}   
-| FLOAT{$$=REAL;/* strcpy($$,"float "); */}
+| INT{$$=INTEGER;}   
+| FLOAT{$$=REAL;}
 ;
 
 declarator
-: IDENTIFIER {$$.name= $1.name;
-   htable_insert(h,$1.name,(void *)&$1);
+: IDENTIFIER {
+  $$.name= $1.name;
+  htable_insert(h,$1.name,(void *)&$1);
  }
-| '(' declarator ')' {$$.name = strdup($2.name); sprintf($$.code,"(%s)",$$.name); }
+| '(' declarator ')'{
+  $$.name = strdup($2.name);
+  sprintf($$.code,"(%s)",$$.name); 
+  }
 | declarator '[' CONSTANTI ']'
 | declarator '[' ']'
 | declarator '(' parameter_list ')' {}
-| declarator '(' ')' {$$.name = strdup($1.name); sprintf($$.code,"%s ()",$$.name);}
+| declarator '(' ')' {
+  $$.name = strdup($1.name); 
+  sprintf($$.code,"%s ()",$$.name);
+  }
 ;
 
 parameter_list
@@ -294,18 +350,21 @@ compound_statement
 ;
 
 declaration_list
-: declaration {strcpy($$,$1);}
+: declaration {//strcpy($$,$1);
+  strcpy($$,"declaration list \n");
+  strcat($$,$1);
+ }
 | declaration_list declaration
 ;
 
 statement_list
 : statement{strcpy($$,$1);}
-| statement_list statement
+| statement_list statement{strcat($1,$2);strcpy($$,$1);}
 ;
 
 expression_statement
 : ';'
-| expression ';'{strcpy($$,$1);}
+| expression ';'{strcpy($$,$1);strcat($$,"\n");}
 ;
 
 selection_statement
