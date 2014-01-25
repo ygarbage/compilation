@@ -53,7 +53,7 @@ struct hashtable * htable_create(hsize size,hsize (*hashfunc)(const char*));
 void htable_destroy(struct hashtable * h);
 int htable_insert(struct hashtable *h,const char * key, void* data);
 void *htable_insert_type(struct hashtable* h, const char*key, enum Type type);
-void *htable_insert_list(struct hashtable* h, const char*key, enum Type type);
+void *htable_insert_list(struct hashtable* h, enum Type type, char code[2048]);
 int htable_remove(struct hashtable* h, const char * key);
 void* htable_get(struct hashtable* h, const char *key);
 int htable_resize(struct hashtable *h, hsize size);

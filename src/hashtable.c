@@ -144,3 +144,28 @@ int htable_resize(struct hashtable *h, hsize size){
 
   return 0;
 }
+
+void *htable_insert_list(struct hashtable * h, enum Type t, char code[2048]) {
+  
+  int i = 0;
+  int j = 0;
+  char * buf = malloc(sizeof(char) * 100);
+  
+  while (code[i] != ';') {
+    if (code[i] != ',') {
+      buf[j] = code[i];
+      ++j;
+    }
+    else {
+      ++j;
+      buf[j] = 0;
+      htable_insert_type(h, buf, t);
+      free(buf);
+      buf = NULL;
+      buf = malloc(sizeof(char) * 100);
+      j = 0;
+    }
+    ++i;
+  }
+  htable_insert_type(h, buf, t);
+}
