@@ -3,6 +3,7 @@
 
 #include<stdlib.h>
 
+
 /*
 La table de hashage est un tableau de listes chainées.
  Chaque élément possède une donnée est une clef. 
@@ -33,6 +34,19 @@ struct hashnode{
   void * data;
   struct hashnode * next;
 };
+
+//source of BOG ! redefinition of same structure as in grammar.y
+ struct Variable {
+    //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
+    enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
+    char * name;//char name[V_NAME_SIZE];
+    char * llvm_name;
+    // On n'utilise pas de #define pour la taille du code
+    // car ceux ci ne sont pas reconnus (??)
+    char code[2048];
+    float value; // Store int in a float
+  } var;
+
 
 struct hashtable * htable_create(hsize size,hsize (*hashfunc)(const char*));
 void htable_destroy(struct hashtable * h);
