@@ -3,9 +3,7 @@
 #include <string.h>
 
 #include "static.h"
-  //#include "variable.h"
 #include "hashtable.h"
-  //#include "type.h"
   extern int yylineno;
   int yylex ();
   int yyerror ();
@@ -15,18 +13,27 @@
   %}
 
 %union {
-  /* int i; */
-  /* float f; */
-  /* char * s; */
-  char code[2048]; // je vois pas comment faire autrement.
+  /*
+   * Cette variable 'code' est le type de ce que contient : expression, 
+   * type_name,statement, compound_statement, expression_statement, 
+   * statement_list.
+   * En effet par ces champs on ne fait que remonter du code le long de 
+   * l'arbre syntaxique.
+   */
+  char code[2048];
+  
+  /*
+    La structure Variable permet de /TODO/
+   */
   struct Variable {
     //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
     enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
     char * name;//char name[V_NAME_SIZE];
     char * llvm_name;
+    // On n'utilise pas de #define pour la taille du code
+    // car ceux ci ne sont pas reconnus (??)
     char code[2048];
     float value; // Store int in a float
-    //char code[CODE_SIZE];
   } var;
 
 }
@@ -47,6 +54,7 @@
 %type <code> expression
 %type <code> type_name 
 %type <code> statement compound_statement expression_statement statement_list
+%type <code> declaration_list declaration declarator_list
 
 %token IF ELSE WHILE RETURN FOR
 
@@ -55,12 +63,19 @@
 
 primary_expression
 : IDENTIFIER {if (htable_get(h, $1.name) == NULL) {
+     printf("key :%s\n",$1.name);
+     perror("ID not in htable yet");
      htable_insert(h, $1.name, (void*) &$1);
    }
    else{}
+   //copy of var name from ID to primary expression
+   strcpy($$.name,$1.name);
    
+   //creation of llvm_name from ID to primary expression
    $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+   //the value is in the htable. key==name (NOT LLVM NAME)
+   printf("in htable key : %s value : %s \n",$$.name,((struct Variable *)htable_get(h,$$.name))->name);
    //perror("Primary Expression IDENTIFIER");
    
  }
@@ -156,7 +171,13 @@ assignment_operator
 ;
 
 declaration
-: type_name declarator_list ';'
+: type_name declarator_list ';' {
+  //jump a line after each declaration
+  strcat($2,"\n"); 
+  // copy the declarators' list into type name
+  strcat($1,$2); 
+  // copy the whole thing into declaration
+  strcpy($$,$1); }
 ;
 
 declarator_list
@@ -199,11 +220,11 @@ statement
 compound_statement
 : '{' '}'
 | '{' statement_list '}'{strcpy($$,$2); }
-| '{' declaration_list statement_list '}'
+| '{' declaration_list statement_list '}' {strcat($2,$3); strcpy($$,$2);}
 ;
 
 declaration_list
-: declaration
+: declaration {strcpy($$,$1);}
 | declaration_list declaration
 ;
 
