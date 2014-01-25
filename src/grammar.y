@@ -167,8 +167,38 @@ expression
   /* if (strcmp($1.name, "$accel") == 0) { */
   /*   printf("\tstore float %f, float* %%accelCmd\n", $3.value); */
   /* } */
+  if ($2.type == OPERATOREQUAL) { // If it is an affectation
 
-  if (strcmp($1.name, "$accel") == 0){
+    printf("Affectation..\n");
+
+    struct Variable * var_left = malloc(sizeof(struct Variable));
+    struct Variable * var_right = malloc(sizeof(struct Variable));
+    var_left = (struct Variable *) htable_get(h, $1.name);
+    var_right = (struct Variable *) htable_get(h, $3.name);
+    
+    /* Debug */
+    printf("unary_expression name : %s\n", $1.name);
+    printf("name : %s\n", var_left->name);
+    printf("type : %d\n", var_left->type);
+    printf("comparison_expression name : %s\n", $3.name);
+    printf("name : %s\n", var_right->name);
+    printf("type : %d\n", var_right->type);
+    /* Debug */
+    
+    if (var_left->type != var_right->type) {
+      yyerror("Erreur : impossible d'affecter un %s dans un %s !\n", get_type_string(var_right->type), get_type_string(var_left->type));
+    }
+      
+    switch (var_left->type) {
+    case REAL :
+      printf("%s = fadd %f, 0.0\n", var_left->llvm_name, $3.value);
+      break;
+    default:
+      printf("default\n");
+    }
+    
+  }
+  if (strcmp($1.name, "$accel") == 0) {
     //perror("exp st $accel");
     if($2.type==OPERATOREQUAL){
       //perror("exp st $accel =");
