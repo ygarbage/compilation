@@ -80,6 +80,15 @@ int htable_insert(struct hashtable *h, const char *key, void* data){
   h->nodes[hash]=node;
   return 0;
 }
+
+
+void *htable_insert_type(struct hashtable* h, const char*key, enum Type type){
+  //source of leaks later
+  struct Variable* data=malloc(sizeof(struct Variable));
+  data->type=type;
+  htable_insert(h,key,data);
+}
+
 int htable_remove(struct hashtable* h, const char *key){
   struct hashnode *node,*prevnode=NULL;
   hsize hash=h->hashfunc(key)%h->size;
@@ -99,12 +108,6 @@ int htable_remove(struct hashtable* h, const char *key){
   return -1;
 }
 
-void *htable_insert_type(struct hashtable* h, const char*key, enum Type type){
-  //source of leaks later
-  void * data=malloc(sizeof(struct Variable));
-  data->type=type;
-  htable_insert(h,key,data);
-}
 
 void* htable_get(struct hashtable* h, const char *key){
   struct hashnode* node;

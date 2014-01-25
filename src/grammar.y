@@ -4,12 +4,16 @@
 
 #include "static.h"
 #include "hashtable.h"
+  
   extern int yylineno;
   int yylex ();
   int yyerror ();
 
   struct hashtable * h = NULL;
   char tmpnumber[20];
+
+
+
   %}
 
 %union {
@@ -21,21 +25,8 @@
    * l'arbre syntaxique.
    */
   char code[2048];
-  
-  /*
-    La structure Variable permet de /TODO/
-   */
-  struct Variable {
-    //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
-    enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
-    char * name;//char name[V_NAME_SIZE];
-    char * llvm_name;
-    // On n'utilise pas de #define pour la taille du code
-    // car ceux ci ne sont pas reconnus (??)
-    char code[2048];
-    float value; // Store int in a float
-  } var;
-
+  struct Variable var;
+  enum Type type;
 }
 
 %token <var> IDENTIFIER
@@ -52,7 +43,7 @@
 %type <var> declarator primary_expression postfix_expression unary_expression multiplicative_expression additive_expression comparison_expression
 %type <var> assignment_operator
 %type <code> expression
-%type <code> type_name 
+%type <type> type_name 
 %type <code> statement compound_statement expression_statement statement_list
 %type <code> declaration_list declaration declarator_list
 
@@ -172,12 +163,17 @@ assignment_operator
 
 declaration
 : type_name declarator_list ';' {
-  //jump a line after each declaration
-  strcat($2,"\n"); 
+  htable_insert_list(h,$1,$2);
+  // Be Carefull a declaration is not printed
+  // in the llvm code.
+  /*jump a line after each declaration
+  //strcat($2,"\n"); 
   // copy the declarators' list into type name
-  strcat($1,$2); 
+  //strcat($1,$2); 
   // copy the whole thing into declaration
-  strcpy($$,$1); }
+  //strcpy($$,$1); */
+  
+ }
 ;
 
 declarator_list
@@ -186,13 +182,15 @@ declarator_list
 ;
 
 type_name
-: VOID{strcpy($$,"void ");}
-| INT{strcpy($$,"int ");}   
-| FLOAT{strcpy($$,"float ");}
+: VOID{}
+| INT{}   
+| FLOAT{$$=REAL);/* strcpy($$,"float "); */}
 ;
 
 declarator
-: IDENTIFIER {$$.name = $1.name; }
+: IDENTIFIER {$$.name = $1.name;
+   htable_insert(h,$1.name,(void *)&$1);
+ }
 | '(' declarator ')' {$$.name = strdup($2.name); sprintf($$.code,"(%s)",$$.name); }
 | declarator '[' CONSTANTI ']'
 | declarator '[' ']'
@@ -306,7 +304,6 @@ int main (int argc, char *argv[]) {
     
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
-
   yyparse();
   //printDriveFunctionEnd();
   //printBottomStaticPart();

@@ -35,8 +35,10 @@ struct hashnode{
   struct hashnode * next;
 };
 
-//source of BOG ! redefinition of same structure as in grammar.y
- struct Variable {
+  /*
+    La structure Variable permet de /TODO/
+  */
+  struct Variable {
     //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
     enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
     char * name;//char name[V_NAME_SIZE];
@@ -45,12 +47,13 @@ struct hashnode{
     // car ceux ci ne sont pas reconnus (??)
     char code[2048];
     float value; // Store int in a float
-  } var;
-
+  };
 
 struct hashtable * htable_create(hsize size,hsize (*hashfunc)(const char*));
 void htable_destroy(struct hashtable * h);
 int htable_insert(struct hashtable *h,const char * key, void* data);
+void *htable_insert_type(struct hashtable* h, const char*key, enum Type type);
+void *htable_insert_list(struct hashtable* h, const char*key, enum Type type);
 int htable_remove(struct hashtable* h, const char * key);
 void* htable_get(struct hashtable* h, const char *key);
 int htable_resize(struct hashtable *h, hsize size);
