@@ -10,11 +10,11 @@ char * printDriveTop(struct hashtable*h) {
   strcat(code,"%seg.addr	= getelementptr %struct.tTrkLocPos* %pos, i32 0, i32 0\n");
   strcat(code,"%seg		= load %struct.trackSeg** %seg.addr\n\n");
 
-  strcat(code,"%steer		= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 0\n");
+  strcat(code,"%steerCmd		= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 0\n");
   strcat(code,"%accelCmd	= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 1\n");
   strcat(code,"%brakeCmd	= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 2\n");
   strcat(code,"%clutchCmd	= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 3\n");
-  strcat(code,"%gear		= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 4\n\n");
+  strcat(code,"%gearCmd		= getelementptr %struct.tCarCtrl* %ctrl, i32 0, i32 4\n\n");
   
   // add 
   struct Variable * ctrl=malloc(sizeof(struct Variable));

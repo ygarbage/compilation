@@ -88,23 +88,17 @@ primary_expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
 
   if ( $1.name[0] == '$') { // Special variable
-    printf("SPECIAL variable !\n");
     if ( strstr($1.name, "Cmd") != NULL) { // If it already contains Cmd
       sprintf($$.llvm_name,"%%%s", ($1.name+1));
-      printf("name : %s\n", $$.llvm_name);
     }
     else { // Else, adding Cmd is necessary
       sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
-      printf("name : %s\n", $$.llvm_name);
     }
-    // Debug : printf("type : %d\n", special_get_type($$.llvm_name));
     $$.type = special_get_type($$.llvm_name);
   }
 
   else{ // Regular variable
-    printf("REGULAR variable !\n");
     sprintf($$.llvm_name,"%%%s%d", $1.name,reg++);
-    printf("name : %s\n", $$.llvm_name);
   }
   // Here it's a variable that goes in the htable
   $$.cmpt = VAR;
@@ -180,14 +174,12 @@ multiplicative_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
-    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  }
  }
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
@@ -205,7 +197,6 @@ additive_expression
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
  }
 | additive_expression '+' multiplicative_expression
@@ -223,7 +214,6 @@ comparison_expression
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
  } 
 | additive_expression '<' additive_expression
@@ -248,15 +238,16 @@ expression
       //struct Variable * var_right=malloc(sizeof(struct Variable));
       //var_right=htable_get(h,$3.name);
       
-      strcat($$,$1.llvm_name);
       if($3.cmpt==VAR){
 	switch($1.type){
 	case(REAL):
-	  strcat($$," = fadd float 0.0, ");
+	 strcat($$,$1.llvm_name);
+	 strcat($$," = fadd float 0.0, ");
 	  strcat($$,$3.llvm_name);
 	  break;
 	case(INTEGER):
-	  sprintf(tmpnumber,"%d",(int)$3.value);
+	 strcat($$,$1.llvm_name);
+	 sprintf(tmpnumber,"%d",(int)$3.value);
 	  strcat($$," = add i32 0, ");
 	  strcat($$,tmpnumber);
 	  break;
@@ -273,17 +264,24 @@ expression
       else{
 	switch($1.type){
 	case(REAL):
-	  sprintf(tmpnumber,"%f",$3.value);
-	  strcat($$," = fadd float 0.0, ");
-	  strcat($$,tmpnumber);
-	  break;
+	 strcat($$,$1.llvm_name);
+	 sprintf(tmpnumber,"%f",$3.value);
+	 strcat($$," = fadd float 0.0, ");
+	 strcat($$,tmpnumber);
+	 break;
 	case(INTEGER):
-	  sprintf(tmpnumber,"%d",(int)$3.value);
-	  strcat($$," = add i32 0, ");
-	  strcat($$,tmpnumber);
-	  break;
+	 strcat($$,$1.llvm_name);
+	 sprintf(tmpnumber,"%d",(int)$3.value);
+	 strcat($$," = add i32 0, ");
+	 strcat($$,tmpnumber);
+	 break;
 	case(REALPOINTER):
-	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  sprintf(tmpnumber,"%f",$3.value);
+	  strcat($$,"store float ");
+	  strcat($$,tmpnumber);
+	  strcat($$,", float* ");
+	  strcat($$,$1.llvm_name);
+
 	  break;
 	case(INTPOINTER):
 	  sprintf($$,"i32* %s\n",$1.llvm_name);
@@ -329,14 +327,10 @@ type_name
 
 declarator
 : IDENTIFIER {
-  printf("DECLARATOR ID | \n");
-  
   $$.name= $1.name;
   htable_insert(h,$1.name,(void *)&$1);
  }
 | '(' declarator ')'{
-  printf("( DECLARATOR ) | \n");
-  
   strcpy($$.name,$2.name);
   sprintf($$.code,"(%s)",$$.name); 
   }
@@ -460,6 +454,9 @@ int main (int argc, char *argv[]) {
     
   h = htable_create(101, NULL);
   special_init();
+
+  
+
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
   yyparse();

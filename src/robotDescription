@@ -6,5 +6,4 @@ $steer = cangle;
 $accelCmd = 0.75; /* on appuie a 75% sur l'accelerateur */
 $gearCmd = 1; /* on reste en 1ere vitesse */
 $gear = 2;
-$accel = 0.25;
 }
