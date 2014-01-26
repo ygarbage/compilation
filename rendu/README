@@ -1,0 +1,31 @@
+---- Projet de compilation - S7 - ENSEIRB-MATMECA ----
+
+---- Membres de l'équipe ----
+Hugo Brunie, Yvon Garbage
+
+---- Compilation ----
+
+-- Génération du compilateur --
+   Le compilateur est généré dans le dossier src en tappant la commande suivante à la racine :
+   make compilateur
+
+-- Génération de la représentation intermédiaire LLVM du robot --
+   La représentation intermédiaire LLVM du robot est générée dans le dossier driver/src/ en tappant la commande suivante à la racine :
+   make llvm
+
+-- Génération de la bibliothèque enseirBOT.so --
+   La bibliothèque du robot, enseirBOT.so, est générée dans le dossier driver/lib en tappant la commande suivante à la racine :
+   make biblio
+
+-- Génération de tous les fichiers précédents --
+   En tappant la commande suivant à la racine :
+   make
+
+---- Organisation des répertoires et fichiers ----
+hbrunie_ygarbage/
+		driver/
+		      objs/ : contient les fichiers objets intermédiaires générés pendant la compilation de la bibliothèque du robot,
+		      src/ : contient le fichier source du robot driver.cpp, et la représentation intermédiaire LLVM générée du robot,
+		      lib/ : contient la bibliothèque générée du robot, enseirBOT.so,
+		
+		src/	   : contient les sources du compilateur, et le fichier en langage d'entrée décrivant le robot.
