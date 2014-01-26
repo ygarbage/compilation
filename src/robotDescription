@@ -1,0 +1,13 @@
+void drive() {
+float test;
+int a, b, c;
+int d, e, f;
+int toto;
+test = 2.0;
+a = 1;
+c = 1 + 2;
+d = 8 - 3;
+e = 3 * 2;
+f = 8 / 2;
+toto = a + b;
+}
