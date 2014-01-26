@@ -105,8 +105,8 @@ primary_expression
   // The value is in the htable. key==name (NOT LLVM NAME)
   htable_insert(h, $$.name, (void*) &$$);
  }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST;}
-| CONSTANTF {$$.value = $1.value; $$.cmpt=CST;}
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER;}
+| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL;}
 | '(' expression ')' {
   strcpy($$.code,"(");
   strcat($$.code,$2);
@@ -134,6 +134,7 @@ postfix_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
+    $$.type = $1.type;
     printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
@@ -153,10 +154,12 @@ argument_expression_list
 ;
 
 unary_expression
-: postfix_expression{
+: postfix_expression {
+  $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
-    $$.value=$1.value;
+    $$.value = $1.value;
+    $$.type = $1.type;
     printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
@@ -178,9 +181,11 @@ unary_operator
 
 multiplicative_expression
 : unary_expression{
+  $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
+    $$.type = $1.type;
   }
   else{
     //copy of llvm_name
@@ -195,9 +200,11 @@ multiplicative_expression
 
 additive_expression
 : multiplicative_expression{
+  $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
+    $$.type = $1.type;
     printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
@@ -213,9 +220,11 @@ additive_expression
 
 comparison_expression
 : additive_expression{
+  $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
+    $$.type = $1.type;
   }
   else{
     //copy of llvm_name
@@ -234,62 +243,66 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression  {
-  strcpy($$,""); // avoid print bug
+
+  strcpy($$,""); // Avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
-    //debug
-    if(((struct Variable *)htable_get(h,$1.name))->type
-       != ((struct Variable *)htable_get(h,$3.name))->type){
-      yyerror("Erreur de type");
-    }
     
-    else{
-      //struct Variable * var_right=malloc(sizeof(struct Variable));
-      //var_right=htable_get(h,$3.name);
-      
-      if($3.cmpt==VAR){
-	switch($1.type){
+    // Debug
+    if ($3.cmpt == VAR) { // If comparison_expression is a variable
+      if ( ((struct Variable *)htable_get(h,$1.name))->type != ((struct Variable *)htable_get(h,$3.name))->type ) {
+	yyerror("Erreur de type");
+      }
+      else {
+	switch($1.type) {
 	case(REAL):
-	 strcat($$,$1.llvm_name);
-	 strcat($$," = fadd float 0.0, ");
+	  strcat($$,$1.llvm_name);
+	  strcat($$," = fadd float 0.0, ");
 	  strcat($$,$3.llvm_name);
 	  break;
 	case(INTEGER):
-	 strcat($$,$1.llvm_name);
-	 sprintf(tmpnumber,"%d",(int)$3.value);
+	  strcat($$,$1.llvm_name);
+	  sprintf(tmpnumber,"%d",(int)$3.value);
 	  strcat($$," = add i32 0, ");
 	  strcat($$,tmpnumber);
 	  break;
 	case(REALPOINTER):
-	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  sprintf(tmpnumber,"%f", $3.value);
+	  sprintf($$,"store float %s, float* %s\n",tmpnumber, $1.llvm_name);
 	  break;
 	case(INTPOINTER):
-	  sprintf($$,"i32* %s\n",$1.llvm_name);
+	  sprintf(tmpnumber,"%d",(int)$3.value);
+	  sprintf($$,"store i32 %s, i32* %s\n", tmpnumber, $1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT var");
 	}
       }
-      else{
-	switch($1.type){
+    } // end : comparison_expression is a variable
+    
+    else { // If comparison_expression is a constant
+      if ( ((struct Variable *)htable_get(h,$1.name))->type != $3.type ) {
+	yyerror("Erreur de type");
+      }
+      else {
+	switch ($1.type) {
 	case(REAL):
-	 strcat($$,$1.llvm_name);
-	 sprintf(tmpnumber,"%f",$3.value);
-	 strcat($$," = fadd float 0.0, ");
-	 strcat($$,tmpnumber);
-	 break;
+	  strcat($$,$1.llvm_name);
+	  sprintf(tmpnumber,"%f",$3.value);
+	  strcat($$," = fadd float 0.0, ");
+	  strcat($$,tmpnumber);
+	  break;
 	case(INTEGER):
-	 strcat($$,$1.llvm_name);
-	 sprintf(tmpnumber,"%d",(int)$3.value);
-	 strcat($$," = add i32 0, ");
-	 strcat($$,tmpnumber);
-	 break;
+	  strcat($$,$1.llvm_name);
+	  sprintf(tmpnumber,"%d",(int)$3.value);
+	  strcat($$," = add i32 0, ");
+	  strcat($$,tmpnumber);
+	  break;
 	case(REALPOINTER):
 	  sprintf(tmpnumber,"%f",$3.value);
 	  strcat($$,"store float ");
 	  strcat($$,tmpnumber);
 	  strcat($$,", float* ");
 	  strcat($$,$1.llvm_name);
-
 	  break;
 	case(INTPOINTER):
 	  sprintf($$,"i32* %s\n",$1.llvm_name);
@@ -298,10 +311,9 @@ expression
 	  perror("DEFAULT cst");
 	}
       }
-    }
-  }
+    } // end : comparison_expression is a constant
+  } // end : affectation
  }
-
 | comparison_expression
 ;
 
@@ -316,7 +328,7 @@ declaration
 : type_name declarator_list ';' {
   strcat($2,";");
   htable_insert_list(h,$1,$2);
-  //Avoid a print bog :
+  // Avoid a print bog :
   strcpy($$,"");
   
  }
