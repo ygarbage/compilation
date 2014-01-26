@@ -11,3 +11,11 @@ int tools_are_types_compatible(enum Type left, enum Type right) {
     return (right == INTEGER);
   else ;
 }
+
+
+int htable_replace_llvm_name(struct hashtable * h,char * llvm_name, const char *key){
+  struct Variable * var=(struct Variable *)htable_get(h,key);
+  strcpy(var->llvm_name,llvm_name);  
+  return !(strcmp(llvm_name,var->llvm_name));
+
+}

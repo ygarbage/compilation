@@ -49,6 +49,8 @@ void htable_destroy(struct hashtable *h){
   free(h);
 }
 
+
+
 int htable_insert(struct hashtable *h, const char *key, void* data){
   struct hashnode *node;
   hsize hash=h->hashfunc(key)%h->size;
