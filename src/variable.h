@@ -8,17 +8,19 @@
 #define V_DECLARED 0x1
 #define V_WRITABLE 0x2
 #define V_GLOBAL   0x4
+#define CODE_SIZE 2048
 
-typedef enum Type_ { INTEGER, REAL, EMPTY, STRING, FUNCTION } Type;
+typedef enum Type_ { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL } Type;
 typedef enum Access_ { READONLY = 0, WRITABLE = 1} Access;
 
 struct Variable {
   char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
   Type type;
   char * name;//char name[V_NAME_SIZE];
-  char llvm_name[V_LLVMNAME_SIZE];
+  char *llvm_name;
   float value; // Store int in a float
-} Variable;
+  char code[CODE_SIZE];
+} ;
 
 /* Getters */
 

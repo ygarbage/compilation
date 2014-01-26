@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "static.h"
+//#include "static.h"
+#include "existing_function.h"  
 #include "hashtable.h"
-  
   extern int yylineno;
   int yylex ();
   int yyerror ();
@@ -321,8 +321,12 @@ declarator
 | declarator '[' ']'
 | declarator '(' parameter_list ')' {}
 | declarator '(' ')' {
-  $$.name = strdup($1.name); 
-  sprintf($$.code,"%s ()",$$.name);
+   strcpy($$.name,$1.name); 
+  if(strcmp($$.name,"drive")==0){
+    printf("");
+    strcpy($$.code,"");
+    sprintf($$.code,"!!@%s (i32 %%index, %struct.CarElt* %%car, %%struct.SItuation* %%s)",$$.name);
+  }
   }
 ;
 
@@ -337,7 +341,7 @@ parameter_declaration
 
 statement
 : compound_statement
-| expression_statement{strcpy($$,$1);} 
+| expression_statement{strcpy($$,"");strcpy($$,$1);} 
 | selection_statement
 | iteration_statement
 | jump_statement
@@ -345,21 +349,21 @@ statement
 
 compound_statement
 : '{' '}'
-| '{' statement_list '}'{strcpy($$,$2); }
-| '{' declaration_list statement_list '}' {strcat($2,$3); strcpy($$,$2);}
+| '{' statement_list '}'{strcpy($$,"");strcpy($$,$2); }
+| '{' declaration_list statement_list '}' {strcpy($$,"");strcat($2,$3); strcpy($$,$2);}
 ;
 
 declaration_list
 : declaration {//strcpy($$,$1);
   strcpy($$,"declaration list \n");
-  strcat($$,$1);
+strcpy($$,"");  strcat($$,$1);
  }
 | declaration_list declaration
 ;
 
 statement_list
 : statement{strcpy($$,$1);}
-| statement_list statement{strcat($1,$2);strcpy($$,$1);}
+| statement_list statement{strcpy($$,"");strcat($1,$2);strcpy($$,$1);}
 ;
 
 expression_statement
@@ -393,7 +397,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("%s",get_type_string($1)); printf("%s ",$2.code); printf("{\n %s \n}\n",$3);}
+: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n %s \n}\n"/* ,printDriveTop(h) */,$3);}
 ;
 
 %%
@@ -436,7 +440,6 @@ int main (int argc, char *argv[]) {
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
   yyparse();
-  //printDriveFunctionEnd();
   //printBottomStaticPart();
   free(file_name);
   htable_destroy(h);

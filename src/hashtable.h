@@ -40,7 +40,7 @@ struct hashnode{
 */
 struct Variable {
   //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
-  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL }type;
+  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL,STRUCTURE }type;
   // the Comportement allows to make the difference between variable
   // and constant for writing an expression.
   enum Comportement {VAR,CST} cmpt;
