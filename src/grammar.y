@@ -45,7 +45,7 @@ char *get_type_string(enum Type t){
    * En effet par ces champs on ne fait que remonter du code le long de 
    * l'arbre syntaxique.
    */
-  char code[4096];
+  char code[2048];
   struct Variable var;
   enum Type type;
 }
@@ -65,7 +65,7 @@ char *get_type_string(enum Type t){
 %type <var> assignment_operator
 %type <code> expression
 %type <type> type_name 
-%type <code> statement compound_statement expression_statement statement_list
+%type <code> statement compound_statement expression_statement statement_list selection_statement iteration_statement jump_statement
 %type <code> declaration_list declaration declarator_list
 
 %token IF ELSE WHILE RETURN FOR
@@ -75,68 +75,52 @@ char *get_type_string(enum Type t){
 
 primary_expression
 : IDENTIFIER {
+
+  struct Variable * tmp = malloc(sizeof(struct Variable));
+  
   //copy of the type of the identifier in a tampon only if
   //the element already exists in the htable.
   //In order to not overwrite it with nothing, losing information.
   if (NULL != htable_get(h,$1.name) ) {
     enum Type t = ((struct Variable *)htable_get(h,$1.name))->type; 
     $$.type = t;
-      //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("\ndeja dans htable TYPE = %d \n",t);
-  }
-  // fin debug
+    tmp->type = $$.type;
+    printf("TYPE = %d \n",t);
   }
 
   //copy of var name from ID to primary expression
   strcpy($$.name, $1.name);
+  tmp->name = malloc(strlen($1.name + 10) * sizeof(char));
+  strcpy(tmp->name, $1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-
-  // Special variable always begin with '$'
-  if ( $1.name[0] == '$') { 
+  tmp->llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
+  
+  if ( $1.name[0] == '$') { // Special variable
     if ( strstr($1.name, "Cmd") != NULL) { // If it already contains Cmd
       sprintf($$.llvm_name,"%%%s", ($1.name+1));
+      sprintf(tmp->llvm_name,"%%%s", ($1.name+1));
     }
     else { // Else, adding Cmd is necessary
       sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+      sprintf(tmp->llvm_name,"%%%sCmd", ($1.name+1));
     }
     $$.type = special_get_type($$.llvm_name);
-    //debug
-    if(!strcmp($$.name,"$accelCmd")){
-      printf("Primary Expression DANs condition TYPE de %%accelCmd : %d | Dans htable %d\n",
-	     $$.type,((struct Variable *)htable_get(h,"$accelCmd")) !=NULL ? 
-	     ((struct Variable *)htable_get(h,"$accelCmd"))->type : 33) ;
-    }
-    //fin debug
-
+    tmp->type = special_get_type(tmp->llvm_name);
   }
 
   else { // Regular variable
     sprintf($$.llvm_name,"%%%s", $1.name);
+    sprintf(tmp->llvm_name,"%%%s", $1.name);
   }
-  // Here it's a variable that goes in the htable
-  $$.cmpt = VAR;
-  // The value is in the htable. key==name (NOT LLVM NAME)
-  htable_insert(h, $$.name, (void*) &$$);
-//debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Primary Expression après insertion TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
-     //fin debug
-     
-     }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; 
-    //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Primary Expression Costant TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);
-  }
-     //fin debug
-}
-| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL;}
+    // Here it's a variable that goes in the htable
+    $$.cmpt = VAR;
+    tmp->cmpt = VAR;
+    // The value is in the htable. key==name (NOT LLVM NAME)
+    htable_insert(h, tmp->name, (void*) tmp);
+ }
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; $$.name = "\n";$$.llvm_name = "\n";}
+| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL; $$.name = "\n";$$.llvm_name = "\n";}
 | '(' expression ')' {
   strcpy($$.code,"(");
   strcat($$.code,$2);
@@ -161,24 +145,24 @@ primary_expression
 
 postfix_expression
 : primary_expression {
+  //copy of llvm_name
+  $$.llvm_name=$1.llvm_name;
+  //copy of name
+  $$.name=$1.name;
+  
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
     $$.type = $1.type;
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
-  //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Postfix Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
-     //fin debug
-
  }
 | postfix_expression '[' expression ']'
 ;
@@ -190,25 +174,25 @@ argument_expression_list
 
 unary_expression
 : postfix_expression {
+  //copy of llvm_name
+  $$.llvm_name=$1.llvm_name;
+  //copy of name
+  $$.name=$1.name;
+
   $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value = $1.value;
     $$.type = $1.type;
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
+    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
-  //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Unary Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
-     //fin debug
-
  }
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
@@ -227,20 +211,12 @@ multiplicative_expression
     $$.value=$1.value;
     $$.type = $1.type;
   }
-  else if($1.cmpt==VAR){
+  else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-  }
-  else{}
-  //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Multiplicative Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
-     //fin debug
-  
+ }
  }
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
@@ -248,17 +224,12 @@ multiplicative_expression
 
 additive_expression
 : multiplicative_expression{
-  //debug
-  if(!strcmp($$.name,"$accelCmd")){
-    printf("Additive Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
-	   $$.type,
-	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
-     //fin debug
   $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
     $$.type = $1.type;
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -267,7 +238,11 @@ additive_expression
     $$.name=$1.name;
   }
  }
-| additive_expression '+' multiplicative_expression
+| additive_expression '+' multiplicative_expression {
+  printf("$1 : .code : %s, .name %s, .value : %s, .type %s\n", $1.code, $1.name, $1.value, $1.type);
+  printf("+\n");
+  printf("$3 : .code : %s, .name %s, .value : %s, .type %s\n", $3.code, $3.name, $3.value, $3.type);
+}
 | additive_expression '-' multiplicative_expression
 ;
 
@@ -296,26 +271,17 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression  {
+  
   reg++;
   strcpy($$,""); // Avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
-    // If comparison_expression is a variable
-    if ($3.cmpt == VAR) { 
-      /* printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type); */
-      //Fin debug
-  //debug
-      if(((struct Variable *)htable_get(h,$1.name))!=NULL)
-      {
-          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$3.name,
-	   $3.type,
-	   ((struct Variable *)htable_get(h,$3.name))->type);
-      }
-     //fin debug
+    
+    // Debug
+    if ($3.cmpt == VAR) { // If comparison_expression is a variable
+      printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type);
       if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, ((struct Variable *)htable_get(h,$3.name))->type) ) {
 	  yyerror("Erreur de type");
 	}
-      
-      // if compatibles types
       else {
 	switch($1.type) {
 	case(REAL):
@@ -327,9 +293,8 @@ expression
 	case(INTEGER):
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = add i32 0, ");
-	  strcat($$, $3.llvm_name);
-	  //strcat($$,"!!!");
-	  //strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
+	  //strcat($$, $3.llvm_name);
+	  strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(REALPOINTER):
 	  sprintf($$, "store float %s, float* %s\n", $3.llvm_name, $1.llvm_name);
@@ -344,19 +309,7 @@ expression
     } // end : comparison_expression is a variable
     
     else if ($3.cmpt == CST){ // If comparison_expression is a constant
-      //printf("%s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, $3.type);
-
-//debug
-      if(((struct Variable *)htable_get(h,$1.name))!=NULL)
-      {
-          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$1.name,
-	   $1.type,
-	   ((struct Variable *)htable_get(h,$1.name))->type);
-      }
-     //fin debug
-      
-
-
+      printf("%s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, $3.type);
       if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, $3.type ) ) {
 	  yyerror("Erreur de type");
       }
@@ -509,7 +462,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{ \n%s\nret %s}\n", /*printDriveTop(h),*/$3,get_type_string($1));}
+: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n%s \n%s\nret %s}\n", printDriveTop(h),$3,get_type_string($1));}
 ;
 
 %%
