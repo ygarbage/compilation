@@ -269,10 +269,10 @@ expression
 	  //strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(REALPOINTER):
-	  sprintf($$, "store float %s, float* %s\n", $1.llvm_name, $3.llvm_name);
+	  sprintf($$, "store float %s, float* %s\n", $3.llvm_name, $1.llvm_name);
 	  break;
 	case(INTPOINTER):
-	  sprintf($$, "store i32 %s, i32* %s\n", $1.llvm_name, $3.llvm_name);
+	  sprintf($$, "store i32 %s, i32* %s\n", $3.llvm_name, $1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT var");
@@ -298,6 +298,14 @@ expression
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = add i32 0, ");
 	  strcat($$, tmpnumber);
+	  break;
+	case(REALPOINTER):
+	  sprintf(tmpnumber, "%f", $3.value);
+	  sprintf($$, "store float %s, float* %s\n", tmpnumber, $1.llvm_name);
+	  break;
+	case(INTPOINTER):
+	  sprintf(tmpnumber, "%d", (int)$3.value);
+	  sprintf($$, "store i32 %s, i32* %s\n", tmpnumber, $1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT cst");
