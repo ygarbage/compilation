@@ -29,3 +29,9 @@ hbrunie_ygarbage/
 		      lib/ : contient la bibliothèque générée du robot, enseirBOT.so,
 		
 		src/	   : contient les sources du compilateur, et le fichier en langage d'entrée décrivant le robot.
+
+
+-- Remarque :
+Nous n'avons pas réussi à faire compiler le fichier drive.input donné en exemple.
+Cependant le fichier robotDescription, qui effectue des déclarations et initialisations de variables simples, compile.
+Ce qui était réalisé dans le premier livrable fonctionne toujours.
