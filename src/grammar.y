@@ -218,8 +218,19 @@ multiplicative_expression
     $$.name=$1.name;
  }
  }
-| multiplicative_expression '*' unary_expression
-| multiplicative_expression '/' unary_expression
+| multiplicative_expression '*' unary_expression {
+  printf("$1 : .code : %s, .name %s, .value : %f, .type %d\n", $1.code, $1.name, $1.value, $1.type);
+  printf("*\n");
+  printf("$3 : .code : %s, .name %s, .value : %f, .type %d\n", $3.code, $3.name, $3.value, $3.type);
+  $$.value = $1.value * $3.value;
+  }
+
+| multiplicative_expression '/' unary_expression {
+  printf("$1 : .code : %s, .name %s, .value : %f, .type %d\n", $1.code, $1.name, $1.value, $1.type);
+  printf("/\n");
+  printf("$3 : .code : %s, .name %s, .value : %f, .type %d\n", $3.code, $3.name, $3.value, $3.type);
+  $$.value = $1.value / $3.value;
+  }
 ;
 
 additive_expression
@@ -239,8 +250,11 @@ additive_expression
   }
  }
 | additive_expression '+' multiplicative_expression {
+  $$.value = $1.value + $3.value;
 }
-| additive_expression '-' multiplicative_expression
+| additive_expression '-' multiplicative_expression {
+  $$.value = $1.value - $3.value;
+  }
 ;
 
 comparison_expression
