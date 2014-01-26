@@ -65,7 +65,7 @@ char *get_type_string(enum Type t){
 %type <var> assignment_operator
 %type <code> expression
 %type <type> type_name 
-%type <code> statement compound_statement expression_statement statement_list
+%type <code> statement compound_statement expression_statement statement_list selection_statement iteration_statement jump_statement
 %type <code> declaration_list declaration declarator_list
 
 %token IF ELSE WHILE RETURN FOR
@@ -75,40 +75,52 @@ char *get_type_string(enum Type t){
 
 primary_expression
 : IDENTIFIER {
+
+  struct Variable * tmp = malloc(sizeof(struct Variable));
+  
   //copy of the type of the identifier in a tampon only if
   //the element already exists in the htable.
   //In order to not overwrite it with nothing, losing information.
   if (NULL != htable_get(h,$1.name) ) {
     enum Type t = ((struct Variable *)htable_get(h,$1.name))->type; 
     $$.type = t;
+    tmp->type = $$.type;
     printf("TYPE = %d \n",t);
   }
 
   //copy of var name from ID to primary expression
   strcpy($$.name, $1.name);
+  tmp->name = malloc(strlen($1.name + 10) * sizeof(char));
+  strcpy(tmp->name, $1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-
+  tmp->llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
+  
   if ( $1.name[0] == '$') { // Special variable
     if ( strstr($1.name, "Cmd") != NULL) { // If it already contains Cmd
       sprintf($$.llvm_name,"%%%s", ($1.name+1));
+      sprintf(tmp->llvm_name,"%%%s", ($1.name+1));
     }
     else { // Else, adding Cmd is necessary
       sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+      sprintf(tmp->llvm_name,"%%%sCmd", ($1.name+1));
     }
     $$.type = special_get_type($$.llvm_name);
+    tmp->type = special_get_type(tmp->llvm_name);
   }
 
   else { // Regular variable
     sprintf($$.llvm_name,"%%%s", $1.name);
+    sprintf(tmp->llvm_name,"%%%s", $1.name);
   }
     // Here it's a variable that goes in the htable
     $$.cmpt = VAR;
+    tmp->cmpt = VAR;
     // The value is in the htable. key==name (NOT LLVM NAME)
-    htable_insert(h, $$.name, (void*) &$$);
+    htable_insert(h, tmp->name, (void*) tmp);
  }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; $$.name = "\n";}
-| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL; $$.name = "\n";}
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; $$.name = "\n";$$.llvm_name = "\n";}
+| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL; $$.name = "\n";$$.llvm_name = "\n";}
 | '(' expression ')' {
   strcpy($$.code,"(");
   strcat($$.code,$2);
@@ -133,6 +145,11 @@ primary_expression
 
 postfix_expression
 : primary_expression {
+  //copy of llvm_name
+  $$.llvm_name=$1.llvm_name;
+  //copy of name
+  $$.name=$1.name;
+  
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
@@ -157,6 +174,11 @@ argument_expression_list
 
 unary_expression
 : postfix_expression {
+  //copy of llvm_name
+  $$.llvm_name=$1.llvm_name;
+  //copy of name
+  $$.name=$1.name;
+
   $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value

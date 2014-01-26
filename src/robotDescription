@@ -1,7 +1,9 @@
 void drive () {
 float test;
 int a, b;
-test = 3;
-a = 2;
+
+test = 2.0;
+a = 3;
+
 b = a;
 }
