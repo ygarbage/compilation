@@ -239,9 +239,6 @@ additive_expression
   }
  }
 | additive_expression '+' multiplicative_expression {
-  printf("$1 : .code : %s, .name %s, .value : %s, .type %s\n", $1.code, $1.name, $1.value, $1.type);
-  printf("+\n");
-  printf("$3 : .code : %s, .name %s, .value : %s, .type %s\n", $3.code, $3.name, $3.value, $3.type);
 }
 | additive_expression '-' multiplicative_expression
 ;
@@ -283,6 +280,11 @@ expression
 	  yyerror("Erreur de type");
 	}
       else {
+	
+	
+	sprintf($1.llvm_name,"%s%d",$1.llvm_name,reg);
+	htable_replace_llvm_name(h,$1.llvm_name, $1.name);
+
 	switch($1.type) {
 	case(REAL):
 	  strcat($$, $1.llvm_name);
