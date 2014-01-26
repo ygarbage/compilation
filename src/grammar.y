@@ -3,8 +3,9 @@
 #include <string.h>
 
 //#include "static.h"
-#include "existing_function.h"  
+#include "existing_function.h"
 #include "hashtable.h"
+#include "special.h"
   extern int yylineno;
   int yylex ();
   int yyerror ();
@@ -75,9 +76,9 @@ primary_expression
   //copy of the type of the identifier in a tampon only if
   //the element already exists in the htable.
   //In order to not overwrite it with nothing, losing information.
-  if(NULL!=htable_get(h,$1.name)){
-    enum Type t= ((struct Variable *)htable_get(h,$1.name))->type; 
-    $$.type=t;
+  if (NULL != htable_get(h,$1.name) ) {
+    enum Type t = ((struct Variable *)htable_get(h,$1.name))->type; 
+    $$.type = t;
     printf("TYPE = %d \n",t);
   }
 
@@ -85,16 +86,29 @@ primary_expression
   strcpy($$.name,$1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
-  if(strcmp($1.name,"$accel")==0){
-    sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+
+  if ( $1.name[0] == '$') { // Special variable
+    printf("SPECIAL variable !\n");
+    if ( strstr($1.name, "Cmd") != NULL) { // If it already contains Cmd
+      sprintf($$.llvm_name,"%%%s", ($1.name+1));
+      printf("name : %s\n", $$.llvm_name);
+    }
+    else { // Else, adding Cmd is necessary
+      sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
+      printf("name : %s\n", $$.llvm_name);
+    }
+    // Debug : printf("type : %d\n", special_get_type($$.llvm_name));
+    $$.type = special_get_type($$.llvm_name);
   }
 
-  else{
+  else{ // Regular variable
+    printf("REGULAR variable !\n");
     sprintf($$.llvm_name,"%%%s%d", $1.name,reg++);
+    printf("name : %s\n", $$.llvm_name);
   }
-  //Here it's a variable that goes in the htable
-  $$.cmpt=VAR;
-  //the value is in the htable. key==name (NOT LLVM NAME)
+  // Here it's a variable that goes in the htable
+  $$.cmpt = VAR;
+  // The value is in the htable. key==name (NOT LLVM NAME)
   htable_insert(h, $$.name, (void*) &$$);
  }
 | CONSTANTI {$$.value = $1.value; $$.cmpt=CST;}
@@ -119,7 +133,7 @@ postfix_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
-    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -142,7 +156,7 @@ unary_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
-    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -166,7 +180,7 @@ multiplicative_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
-    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -184,7 +198,7 @@ additive_expression
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
-    printf("postfix exp Value %d !!! n°%d\n",$$.value,i++);
+    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -226,7 +240,7 @@ expression
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
     //debug
     if(((struct Variable *)htable_get(h,$1.name))->type
-       != ((struct Variable *)htable_get(h,$1.name))->type){
+       != ((struct Variable *)htable_get(h,$3.name))->type){
       yyerror("Erreur de type");
     }
     
@@ -249,6 +263,9 @@ expression
 	case(REALPOINTER):
 	  sprintf($$,"float* %s\n",$1.llvm_name);
 	  break;
+	case(INTPOINTER):
+	  sprintf($$,"i32* %s\n",$1.llvm_name);
+	  break;
 	default:
 	  perror("DEFAULT var");
 	}
@@ -267,6 +284,9 @@ expression
 	  break;
 	case(REALPOINTER):
 	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  break;
+	case(INTPOINTER):
+	  sprintf($$,"i32* %s\n",$1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT cst");
@@ -326,9 +346,9 @@ declarator
 | declarator '(' ')' {
    strcpy($$.name,$1.name); 
   if(strcmp($$.name,"drive")==0){
+    //printf("");
     strcpy($$.code,"");
     sprintf($$.code,"@%s (i32 %%index, %%struct.CarElt* %%car, %%struct.SItuation* %%s)",$$.name);
-
   }
   }
 ;
@@ -439,7 +459,7 @@ int main (int argc, char *argv[]) {
   }
     
   h = htable_create(101, NULL);
-    
+  special_init();
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
   yyparse();
