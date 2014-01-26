@@ -85,7 +85,7 @@ primary_expression
   }
 
   //copy of var name from ID to primary expression
-  strcpy($$.name,$1.name);
+  strcpy($$.name, $1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
 
@@ -99,16 +99,16 @@ primary_expression
     $$.type = special_get_type($$.llvm_name);
   }
 
-  else{ // Regular variable
-    sprintf($$.llvm_name,"%%%s%d", $1.name,reg++);
+  else { // Regular variable
+    sprintf($$.llvm_name,"%%%s", $1.name);
   }
-  // Here it's a variable that goes in the htable
-  $$.cmpt = VAR;
-  // The value is in the htable. key==name (NOT LLVM NAME)
-  htable_insert(h, $$.name, (void*) &$$);
+    // Here it's a variable that goes in the htable
+    $$.cmpt = VAR;
+    // The value is in the htable. key==name (NOT LLVM NAME)
+    htable_insert(h, $$.name, (void*) &$$);
  }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER;}
-| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL;}
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; $$.name = "\n";}
+| CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL; $$.name = "\n";}
 | '(' expression ')' {
   strcpy($$.code,"(");
   strcat($$.code,$2);
@@ -245,7 +245,8 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression  {
-
+  
+  reg++;
   strcpy($$,""); // Avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
     
@@ -260,13 +261,14 @@ expression
 	case(REAL):
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = fadd float 0.0, ");
-	  strcat($$, $3.llvm_name);
+	  //strcat($$, $3.llvm_name);
+	  strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(INTEGER):
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = add i32 0, ");
-	  strcat($$, $3.llvm_name);
-	  //strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
+	  //strcat($$, $3.llvm_name);
+	  strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(REALPOINTER):
 	  sprintf($$, "store float %s, float* %s\n", $3.llvm_name, $1.llvm_name);
@@ -314,7 +316,7 @@ expression
     } // end : comparison_expression is a constant
   } // end : affectation
  }
-| comparison_expression
+| comparison_expression {strcpy($$, $1.code);}
 ;
 
 assignment_operator
