@@ -45,7 +45,7 @@ char *get_type_string(enum Type t){
    * En effet par ces champs on ne fait que remonter du code le long de 
    * l'arbre syntaxique.
    */
-  char code[2048];
+  char code[4096];
   struct Variable var;
   enum Type type;
 }
@@ -89,7 +89,7 @@ primary_expression
   }
 
   //copy of var name from ID to primary expression
-  strcpy($$.name,$1.name);
+  strcpy($$.name, $1.name);
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
 
@@ -112,8 +112,8 @@ primary_expression
 
   }
 
-  else{ // Regular variable
-    sprintf($$.llvm_name,"%%%s%d", $1.name,reg++);
+  else { // Regular variable
+    sprintf($$.llvm_name,"%%%s", $1.name);
   }
   // Here it's a variable that goes in the htable
   $$.cmpt = VAR;
@@ -127,7 +127,7 @@ primary_expression
      //fin debug
      
      }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER;
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER; 
     //debug
   if(!strcmp($$.name,"$accelCmd")){
     printf("Primary Expression Costant TYPE de %%accelCmd : %d | Dans htable %d\n",
@@ -296,44 +296,46 @@ comparison_expression
 
 expression
 : unary_expression assignment_operator comparison_expression  {
-
-
+  reg++;
   strcpy($$,""); // Avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
-    
-    // Debug
-    if ($3.cmpt == VAR) { // If comparison_expression is a variable
+    // If comparison_expression is a variable
+    if ($3.cmpt == VAR) { 
       /* printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type); */
       //Fin debug
   //debug
       if(((struct Variable *)htable_get(h,$1.name))!=NULL)
       {
-          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$1.name,
-	   $1.type,
-	   ((struct Variable *)htable_get(h,$1.name))->type);
+          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$3.name,
+	   $3.type,
+	   ((struct Variable *)htable_get(h,$3.name))->type);
       }
      //fin debug
       if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, ((struct Variable *)htable_get(h,$3.name))->type) ) {
 	  yyerror("Erreur de type");
 	}
+      
+      // if compatibles types
       else {
 	switch($1.type) {
 	case(REAL):
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = fadd float 0.0, ");
-	  strcat($$, $3.llvm_name);
+	  //strcat($$, $3.llvm_name);
+	  strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(INTEGER):
 	  strcat($$, $1.llvm_name);
 	  strcat($$, " = add i32 0, ");
 	  strcat($$, $3.llvm_name);
+	  //strcat($$,"!!!");
 	  //strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(REALPOINTER):
-	  sprintf($$, "store float %s, float* %s\n", $1.llvm_name, $3.llvm_name);
+	  sprintf($$, "store float %s, float* %s\n", $3.llvm_name, $1.llvm_name);
 	  break;
 	case(INTPOINTER):
-	  sprintf($$, "store i32 %s, i32* %s\n", $1.llvm_name, $3.llvm_name);
+	  sprintf($$, "store i32 %s, i32* %s\n", $3.llvm_name, $1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT var");
@@ -372,6 +374,14 @@ expression
 	  strcat($$, " = add i32 0, ");
 	  strcat($$, tmpnumber);
 	  break;
+	case(REALPOINTER):
+	  sprintf(tmpnumber, "%f", $3.value);
+	  sprintf($$, "store float %s, float* %s\n", tmpnumber, $1.llvm_name);
+	  break;
+	case(INTPOINTER):
+	  sprintf(tmpnumber, "%d", (int)$3.value);
+	  sprintf($$, "store i32 %s, i32* %s\n", tmpnumber, $1.llvm_name);
+	  break;
 	default:
 	  perror("DEFAULT cst");
 	}
@@ -379,7 +389,7 @@ expression
     } // end : comparison_expression is a constant
   } // end : affectation
  }
-| comparison_expression
+| comparison_expression {strcpy($$, $1.code);}
 ;
 
 assignment_operator
@@ -499,7 +509,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n%s \n%s\nret %s}\n", printDriveTop(h),$3,get_type_string($1));}
+: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{ \n%s\nret %s}\n", /*printDriveTop(h),*/$3,get_type_string($1));}
 ;
 
 %%
