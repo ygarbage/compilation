@@ -1,5 +1,47 @@
 #include "existing_function.h"
 
+void addGlobalFunctionHtable(struct hashtable * h, char * name_arg, char * params){
+  
+  struct Variable *function=NULL;
+  function=malloc(sizeof(struct Variable));
+  char * name=malloc(FUNCTION_NAME_SIZE);
+  char * llvm_name=malloc(FUNCTION_NAME_SIZE);
+  strcpy(name,name_arg);
+  strcpy(llvm_name,"@");
+  strcat(llvm_name,name_arg);
+  strcat(llvm_name,"(");
+  strcat(llvm_name,params);
+  strcat(llvm_name,")");
+  function->name=name;
+  function->llvm_name;
+  htable_insert(h,name,function);
+}
+
+
+
+char * global_functions(){
+  char* code=malloc(1024);
+  strcpy(code,"declare float @norm_pi_pi(float %a)\n");
+  strcat(code,"declare float @get_track_angle(%struct.tTrkLocPos*)\n");
+
+  strcat(code,"declare float @get_pos_to_right(%struct.tTrkLocPos*)\n");
+  strcat(code,"declare float @get_pos_to_middle(%struct.tTrkLocPos*)\n");
+  strcat(code,"declare float @get_pos_to_left(%struct.tTrkLocPos*)\n");
+  strcat(code,"declare float @get_pos_to_start(%struct.tTrkLocPos*)\n");
+  strcat(code,"declare float @get_track_seg_length(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_width(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_start_width(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_end_width(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_radius(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_right_radius(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_left_radius(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_track_seg_arc(%struct.trackSeg*)\n");
+  strcat(code,"declare %struct.trackSeg* @get_track_seg_next(%struct.trackSeg*)\n");
+  strcat(code,"declare float @get_car_yaw(%struct.CarElt*)\n");
+
+  return code;
+}
+
 char * printDriveTop(struct hashtable*h) {
 
   //printf("define void @drive(i32 %%index, %%struct.CarElt* %%car, %%struct.Situation* %%s) {\n");
@@ -61,3 +103,17 @@ char * printDriveTop(struct hashtable*h) {
 
   return code;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

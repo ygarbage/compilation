@@ -434,7 +434,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n%s \n%s\n}\n", printDriveTop(h),$3);}
+: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n%s \n%s\nret %s}\n", printDriveTop(h),$3,get_type_string($1));}
 ;
 
 %%
@@ -479,6 +479,11 @@ int main (int argc, char *argv[]) {
 
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
+  addGlobalFunctionHtable(h, "@get_track_angle","%struct.tTrkLocPos* %pos");
+  addGlobalFunctionHtable(h, "@get_car_yaw","%struct.CarElt* %car");
+  addGlobalFunctionHtable(h, "@norm_pi_pi","float %angle");
+  addGlobalFunctionHtable(h, "@get_pos_to_middle","%struct.tTrkLocPos* %pos");
+  addGlobalFunctionHtable(h, "@get_track_seg_width","%struct.trackSeg* %seg");
   yyparse();
   //printBottomStaticPart();
   free(file_name);

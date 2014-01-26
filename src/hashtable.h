@@ -40,12 +40,12 @@ struct hashnode{
 */
 struct Variable {
   //char flags; // Contains several informations : TODO|..|GLOBAL|WRITABLE|DECLARED
-  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, FUNCTION,OPERATOREQUAL,STRUCTURE }type;
+  enum Type { INTEGER, INTPOINTER, REAL, REALPOINTER,EMPTY, STRING, OPERATOREQUAL,STRUCTURE }type;
   // the Comportement allows to make the difference between variable
   // and constant for writing an expression.
-  enum Comportement {VAR,CST} cmpt;
-  char * name;//char name[V_NAME_SIZE];
-  char * llvm_name;
+  enum Comportement {VAR,CST,FUNCTION} cmpt;
+  char * name;
+  char * llvm_name;// register name
   // On n'utilise pas de #define pour la taille du code
   // car ceux ci ne sont pas reconnus (??)
   char code[2048];
