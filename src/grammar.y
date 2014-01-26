@@ -6,6 +6,8 @@
 #include "existing_function.h"
 #include "hashtable.h"
 #include "special.h"
+#include "tools.h"
+
   extern int yylineno;
   int yylex ();
   int yyerror ();
@@ -249,29 +251,28 @@ expression
     
     // Debug
     if ($3.cmpt == VAR) { // If comparison_expression is a variable
-      if ( ((struct Variable *)htable_get(h,$1.name))->type != ((struct Variable *)htable_get(h,$3.name))->type ) {
-	yyerror("Erreur de type");
-      }
+      printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type);
+      if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, ((struct Variable *)htable_get(h,$3.name))->type) ) {
+	  yyerror("Erreur de type");
+	}
       else {
 	switch($1.type) {
 	case(REAL):
-	  strcat($$,$1.llvm_name);
-	  strcat($$," = fadd float 0.0, ");
-	  strcat($$,$3.llvm_name);
+	  strcat($$, $1.llvm_name);
+	  strcat($$, " = fadd float 0.0, ");
+	  strcat($$, $3.llvm_name);
 	  break;
 	case(INTEGER):
-	  strcat($$,$1.llvm_name);
-	  sprintf(tmpnumber,"%d",(int)$3.value);
-	  strcat($$," = add i32 0, ");
-	  strcat($$,tmpnumber);
+	  strcat($$, $1.llvm_name);
+	  strcat($$, " = add i32 0, ");
+	  strcat($$, $3.llvm_name);
+	  //strcat($$, ((struct Variable *)htable_get(h,$3.name))->llvm_name);
 	  break;
 	case(REALPOINTER):
-	  sprintf(tmpnumber,"%f", $3.value);
-	  sprintf($$,"store float %s, float* %s\n",tmpnumber, $1.llvm_name);
+	  sprintf($$, "store float %s, float* %s\n", $1.llvm_name, $3.llvm_name);
 	  break;
 	case(INTPOINTER):
-	  sprintf(tmpnumber,"%d",(int)$3.value);
-	  sprintf($$,"store i32 %s, i32* %s\n", tmpnumber, $1.llvm_name);
+	  sprintf($$, "store i32 %s, i32* %s\n", $1.llvm_name, $3.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT var");
@@ -279,33 +280,24 @@ expression
       }
     } // end : comparison_expression is a variable
     
-    else { // If comparison_expression is a constant
-      if ( ((struct Variable *)htable_get(h,$1.name))->type != $3.type ) {
-	yyerror("Erreur de type");
+    else if ($3.cmpt == CST){ // If comparison_expression is a constant
+      printf("%s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, $3.type);
+      if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, $3.type ) ) {
+	  yyerror("Erreur de type");
       }
       else {
 	switch ($1.type) {
 	case(REAL):
-	  strcat($$,$1.llvm_name);
-	  sprintf(tmpnumber,"%f",$3.value);
-	  strcat($$," = fadd float 0.0, ");
-	  strcat($$,tmpnumber);
+	  sprintf(tmpnumber, "%f", $3.value);
+	  strcat($$, $1.llvm_name);
+	  strcat($$, " = fadd float 0.0, ");
+	  strcat($$, tmpnumber);
 	  break;
 	case(INTEGER):
-	  strcat($$,$1.llvm_name);
-	  sprintf(tmpnumber,"%d",(int)$3.value);
-	  strcat($$," = add i32 0, ");
-	  strcat($$,tmpnumber);
-	  break;
-	case(REALPOINTER):
-	  sprintf(tmpnumber,"%f",$3.value);
-	  strcat($$,"store float ");
-	  strcat($$,tmpnumber);
-	  strcat($$,", float* ");
-	  strcat($$,$1.llvm_name);
-	  break;
-	case(INTPOINTER):
-	  sprintf($$,"i32* %s\n",$1.llvm_name);
+	  sprintf(tmpnumber, "%d", (int)$3.value);
+	  strcat($$, $1.llvm_name);
+	  strcat($$, " = add i32 0, ");
+	  strcat($$, tmpnumber);
 	  break;
 	default:
 	  perror("DEFAULT cst");
@@ -424,7 +416,7 @@ jump_statement
 ;
 
 program
-: external_declaration {printf("\n%s",global_functions());}
+: external_declaration {/*printf("\n%s",global_functions());*/}
 | program external_declaration
 ;
 
