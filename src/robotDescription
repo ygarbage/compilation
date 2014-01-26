@@ -1,9 +1,14 @@
 void drive () {
 float test;
-int a, b;
-
+int a, b, c;
+int d, e, f;
 test = 2.0;
 a = 3;
 
 b = a;
+
+c = 1 + 2;
+d = 8 - 3;
+e = 3 * 2;
+f = 8 / 2;
 }
