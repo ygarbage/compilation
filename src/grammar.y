@@ -96,7 +96,6 @@ primary_expression
   $$.cmpt=VAR;
   //the value is in the htable. key==name (NOT LLVM NAME)
   htable_insert(h, $$.name, (void*) &$$);
-  printf("LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);
  }
 | CONSTANTI {$$.value = $1.value; $$.cmpt=CST;}
 | CONSTANTF {$$.value = $1.value; $$.cmpt=CST;}
@@ -310,11 +309,15 @@ type_name
 
 declarator
 : IDENTIFIER {
+  printf("DECLARATOR ID | \n");
+  
   $$.name= $1.name;
   htable_insert(h,$1.name,(void *)&$1);
  }
 | '(' declarator ')'{
-  $$.name = strdup($2.name);
+  printf("( DECLARATOR ) | \n");
+  
+  strcpy($$.name,$2.name);
   sprintf($$.code,"(%s)",$$.name); 
   }
 | declarator '[' CONSTANTI ']'
@@ -323,9 +326,9 @@ declarator
 | declarator '(' ')' {
    strcpy($$.name,$1.name); 
   if(strcmp($$.name,"drive")==0){
-    printf("");
     strcpy($$.code,"");
-    sprintf($$.code,"!!@%s (i32 %%index, %struct.CarElt* %%car, %%struct.SItuation* %%s)",$$.name);
+    sprintf($$.code,"@%s (i32 %%index, %%struct.CarElt* %%car, %%struct.SItuation* %%s)",$$.name);
+
   }
   }
 ;
@@ -397,7 +400,7 @@ external_declaration
 ;
 
 function_definition
-: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n %s \n}\n"/* ,printDriveTop(h) */,$3);}
+: type_name declarator compound_statement{printf("define %s",get_type_string($1)); printf("%s ",$2.code); printf("{\n%s \n%s\n}\n", printDriveTop(h),$3);}
 ;
 
 %%
