@@ -81,7 +81,11 @@ primary_expression
   if (NULL != htable_get(h,$1.name) ) {
     enum Type t = ((struct Variable *)htable_get(h,$1.name))->type; 
     $$.type = t;
-    printf("TYPE = %d \n",t);
+      //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("\ndeja dans htable TYPE = %d \n",t);
+  }
+  // fin debug
   }
 
   //copy of var name from ID to primary expression
@@ -89,7 +93,8 @@ primary_expression
   //creation of llvm_name from ID to primary expression
   $$.llvm_name = malloc(strlen($1.name + 10) * sizeof(char));
 
-  if ( $1.name[0] == '$') { // Special variable
+  // Special variable always begin with '$'
+  if ( $1.name[0] == '$') { 
     if ( strstr($1.name, "Cmd") != NULL) { // If it already contains Cmd
       sprintf($$.llvm_name,"%%%s", ($1.name+1));
     }
@@ -97,6 +102,14 @@ primary_expression
       sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
     }
     $$.type = special_get_type($$.llvm_name);
+    //debug
+    if(!strcmp($$.name,"$accelCmd")){
+      printf("Primary Expression DANs condition TYPE de %%accelCmd : %d | Dans htable %d\n",
+	     $$.type,((struct Variable *)htable_get(h,"$accelCmd")) !=NULL ? 
+	     ((struct Variable *)htable_get(h,"$accelCmd"))->type : 33) ;
+    }
+    //fin debug
+
   }
 
   else{ // Regular variable
@@ -106,8 +119,23 @@ primary_expression
   $$.cmpt = VAR;
   // The value is in the htable. key==name (NOT LLVM NAME)
   htable_insert(h, $$.name, (void*) &$$);
- }
-| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER;}
+//debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Primary Expression après insertion TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
+     //fin debug
+     
+     }
+| CONSTANTI {$$.value = $1.value; $$.cmpt=CST; $$.type = INTEGER;
+    //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Primary Expression Costant TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);
+  }
+     //fin debug
+}
 | CONSTANTF {$$.value = $1.value; $$.cmpt=CST; $$.type = REAL;}
 | '(' expression ')' {
   strcpy($$.code,"(");
@@ -137,15 +165,20 @@ postfix_expression
     //copy of value
     $$.value=$1.value;
     $$.type = $1.type;
-    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
+  //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Postfix Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
+     //fin debug
+
  }
 | postfix_expression '[' expression ']'
 ;
@@ -162,15 +195,20 @@ unary_expression
     //copy of value
     $$.value = $1.value;
     $$.type = $1.type;
-    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
-    printf("postfix expression LLVM NAME %s !!! n°%d\n",$$.llvm_name,i++);  
   }
+  //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Unary Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
+     //fin debug
+
  }
 | INC_OP unary_expression {$$ = $2;}
 | DEC_OP unary_expression {$$ = $2;}
@@ -189,12 +227,20 @@ multiplicative_expression
     $$.value=$1.value;
     $$.type = $1.type;
   }
-  else{
+  else if($1.cmpt==VAR){
     //copy of llvm_name
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
- }
+  }
+  else{}
+  //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Multiplicative Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
+     //fin debug
+  
  }
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
@@ -202,12 +248,17 @@ multiplicative_expression
 
 additive_expression
 : multiplicative_expression{
+  //debug
+  if(!strcmp($$.name,"$accelCmd")){
+    printf("Additive Expression TYPE de %%accelCmd : %d | Dans htable %d\n",
+	   $$.type,
+	   ((struct Variable *)htable_get(h,"$accelCmd"))->type);};
+     //fin debug
   $$.cmpt = $1.cmpt;
   if($1.cmpt==CST){
     //copy of value
     $$.value=$1.value;
     $$.type = $1.type;
-    printf("postfix exp Value %f !!! n°%d\n",$$.value,i++);
   }
   else{
     //copy of llvm_name
@@ -246,12 +297,22 @@ comparison_expression
 expression
 : unary_expression assignment_operator comparison_expression  {
 
+
   strcpy($$,""); // Avoid print bug
   if ($2.type == OPERATOREQUAL) { // If it is an affectation
     
     // Debug
     if ($3.cmpt == VAR) { // If comparison_expression is a variable
-      printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type);
+      /* printf("VAR : %s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, ((struct Variable *)htable_get(h,$3.name))->type); */
+      //Fin debug
+  //debug
+      if(((struct Variable *)htable_get(h,$1.name))!=NULL)
+      {
+          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$1.name,
+	   $1.type,
+	   ((struct Variable *)htable_get(h,$1.name))->type);
+      }
+     //fin debug
       if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, ((struct Variable *)htable_get(h,$3.name))->type) ) {
 	  yyerror("Erreur de type");
 	}
@@ -281,7 +342,19 @@ expression
     } // end : comparison_expression is a variable
     
     else if ($3.cmpt == CST){ // If comparison_expression is a constant
-      printf("%s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, $3.type);
+      //printf("%s (%d) = %s (%d)\n", $1.llvm_name, ((struct Variable *)htable_get(h,$1.name))->type, $3.llvm_name, $3.type);
+
+//debug
+      if(((struct Variable *)htable_get(h,$1.name))!=NULL)
+      {
+          printf(" Expression TYPE de %s : %d | Dans htable %d\n",$1.name,
+	   $1.type,
+	   ((struct Variable *)htable_get(h,$1.name))->type);
+      }
+     //fin debug
+      
+
+
       if ( ! tools_are_types_compatible( ((struct Variable *)htable_get(h,$1.name))->type, $3.type ) ) {
 	  yyerror("Erreur de type");
       }
