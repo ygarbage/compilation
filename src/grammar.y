@@ -3,8 +3,9 @@
 #include <string.h>
 
 //#include "static.h"
-#include "existing_function.h"  
+#include "existing_function.h"
 #include "hashtable.h"
+#include "special.h"
   extern int yylineno;
   int yylex ();
   int yyerror ();
@@ -96,6 +97,8 @@ primary_expression
       sprintf($$.llvm_name,"%%%sCmd", ($1.name+1));
       printf("name : %s\n", $$.llvm_name);
     }
+    // Debug : printf("type : %d\n", special_get_type($$.llvm_name));
+    $$.type = special_get_type($$.llvm_name);
   }
 
   else{ // Regular variable
@@ -261,6 +264,9 @@ expression
 	case(REALPOINTER):
 	  sprintf($$,"float* %s\n",$1.llvm_name);
 	  break;
+	case(INTPOINTER):
+	  sprintf($$,"i32* %s\n",$1.llvm_name);
+	  break;
 	default:
 	  perror("DEFAULT var");
 	}
@@ -279,6 +285,9 @@ expression
 	  break;
 	case(REALPOINTER):
 	  sprintf($$,"float* %s\n",$1.llvm_name);
+	  break;
+	case(INTPOINTER):
+	  sprintf($$,"i32* %s\n",$1.llvm_name);
 	  break;
 	default:
 	  perror("DEFAULT cst");
@@ -447,7 +456,7 @@ int main (int argc, char *argv[]) {
   }
     
   h = htable_create(101, NULL);
-    
+  special_init();
   //printTopStaticPart();
   //printDrivePrototypeAndFunctionTop();
   yyparse();

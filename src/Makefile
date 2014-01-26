@@ -5,7 +5,7 @@ CC=gcc
 
 all:compilateur
 
-compilateur:grammar.c scanner.c static.o hashtable.o existing_function.o #variable.o
+compilateur:grammar.c scanner.c static.o hashtable.o existing_function.o special.o #variable.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 static.o:static.c
@@ -18,6 +18,9 @@ hashtable.o:hashtable.c
 	$(CC) -c $^ -o hashtable.o
 
 existing_function.o:existing_function.c
+	$(CC) -c $^ -o $@
+
+special.o:special.c
 	$(CC) -c $^ -o $@
 
 # variable.o:variable.c
