@@ -116,6 +116,13 @@ primary_expression
   strcat($$.code,")");
   }
 | IDENTIFIER '(' ')' {
+  if(htable_get(h,$1.name)!=NULL){
+    $$.type=FUNCTION;
+    $$.name=$1.name;
+  }
+  else{
+    yyerror("incomplete type of the function %s",$1.name);
+  }
   }
 | IDENTIFIER '(' argument_expression_list ')' {}
 | IDENTIFIER INC_OP {}
@@ -180,6 +187,7 @@ multiplicative_expression
     $$.llvm_name=$1.llvm_name;
     //copy of name
     $$.name=$1.name;
+ }
  }
 | multiplicative_expression '*' unary_expression
 | multiplicative_expression '/' unary_expression
@@ -404,7 +412,7 @@ jump_statement
 ;
 
 program
-: external_declaration
+: external_declaration {printf("\n%s",global_functions());}
 | program external_declaration
 ;
 
