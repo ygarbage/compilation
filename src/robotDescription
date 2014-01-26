@@ -1,7 +1,7 @@
 void drive () {
 float angle, nangle;
 test = 3;
-angle =1;
+angle = 1;
 $steer = cangle;	
 $accelCmd = 0.75; /* on appuie a 75% sur l'accelerateur */
 $gearCmd = 1; /* on reste en 1ere vitesse */
